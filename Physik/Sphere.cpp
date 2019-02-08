@@ -16,10 +16,25 @@ Sphere::~Sphere()
 
 void Sphere::makeGizmo()
 {
-	Gizmos::add2DCircle();
+	Gizmos::add2DCircle(m_position, m_radius, 69U, m_colour);
 }
 
 bool Sphere::checkCollision(PhysicsObject * pOther)
 {
+	Sphere* pOtherSphere = dynamic_cast<Sphere*>(pOther);
+
+	// IF successful cast
+	if (pOtherSphere)
+	{
+		float seperation = glm::distance(this->getPosition(), pOtherSphere->getPosition());
+		float fRadiusSum = this->getRadius() + pOtherSphere->getRadius();
+
+		// IF collision
+		if (seperation < fRadiusSum)
+			return true;
+		else
+			return false;
+	}
+	
 	return false;
 }

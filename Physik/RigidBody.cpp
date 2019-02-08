@@ -1,4 +1,5 @@
 #include "RigidBody.h"
+#include <iostream>
 
 Rigidbody::Rigidbody(ShapeID shapeID, glm::vec2 position, glm::vec2 velocity, float rotation, float mass) : PhysicsObject::PhysicsObject(shapeID)
 {
@@ -20,6 +21,8 @@ void Rigidbody::fixedUpdate(glm::vec2 gravity, float timeStep)
 
 void Rigidbody::debug()
 {
+	printf(" MY id %i", (int)m_ShapeId);
+	printf("\n");
 }
 
 void Rigidbody::applyForce(glm::vec2 force)

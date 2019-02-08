@@ -1,5 +1,8 @@
 #include "PhysicsScene.h"
 #include "PhysicsObject.h"
+#include <list>
+#include "RigidBody.h"
+#include <iostream>
 
 
 PhysicsScene::PhysicsScene()
@@ -11,6 +14,10 @@ PhysicsScene::PhysicsScene()
 
 PhysicsScene::~PhysicsScene()
 {
+	for (auto pActor : m_actors)
+	{
+		delete pActor;
+	}
 }
 
 void PhysicsScene::AddActor(PhysicsObject* actor)
@@ -24,7 +31,7 @@ bool PhysicsScene::RemoveActor(PhysicsObject* actor)
 	{
 		if (actor == m_actors[i])
 		{
-			m_actors.erase(m_actors.begin + i);
+			m_actors.erase(m_actors.begin() + i);
 			return true;
 		}
 	}
@@ -34,17 +41,42 @@ bool PhysicsScene::RemoveActor(PhysicsObject* actor)
 
 void PhysicsScene::Update(float dt)
 {
+	debugScene();
+
 	static float accumulatedTime = 0.0f;
 	accumulatedTime += dt;
+
+	static std::list<PhysicsObject*> dirty;
 
 	while (accumulatedTime >= m_timeStep)
 	{
 		for each (PhysicsObject* actor in m_actors)
 		{
-			actor->FixedUpdate(m_gravity, m_timeStep);
+			actor->fixedUpdate(m_gravity, m_timeStep);
 		}
 
 		accumulatedTime -= m_timeStep;
+
+		// check for collisions (ideally you'd want to have some sort of
+		// scene management in place)
+		for (auto pActor : m_actors) {
+			for (auto pOther : m_actors) {
+				if (pActor == pOther)
+					continue;
+				if (std::find(dirty.begin(), dirty.end(), pActor) != dirty.end() &&
+					std::find(dirty.begin(), dirty.end(), pOther) != dirty.end())
+					continue;
+				Rigidbody* pRigid = dynamic_cast<Rigidbody*>(pActor);
+				if (pRigid->checkCollision(pOther) == true) {
+					pRigid->applyForceToActor(
+						dynamic_cast<Rigidbody*>(pOther),
+						pRigid->getVelocity() * pRigid->getMass());
+					dirty.push_back(pRigid);
+					dirty.push_back(pOther);
+				}
+			}
+		}
+		dirty.clear();
 	}
 }
 
@@ -54,4 +86,15 @@ void PhysicsScene::UpdateGizmos()
 	{
 		actor->makeGizmo();
 	}
+}
+
+void PhysicsScene::debugScene()
+{
+	int count = 0;
+	for (auto pActor : m_actors) {
+		std::cout << count << " : ";
+		pActor->debug();
+		count++;
+	}
+	//std::cout.clear();
 }

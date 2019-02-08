@@ -3,9 +3,11 @@
 
 enum class ShapeID : int
 {
-	Plane,
+	Plane = 0,
 	Sphere,
-	Box
+	Box,
+
+	TOTAL
 };
 
 class PhysicsObject
