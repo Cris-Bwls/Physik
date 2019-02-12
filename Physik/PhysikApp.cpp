@@ -4,7 +4,9 @@
 #include "Input.h"
 #include <Gizmos.h>
 #include <glm/ext.hpp>
+#include "Plane.h"
 #include "Sphere.h"
+#include "Box.h"
 
 using namespace glm;
 
@@ -31,6 +33,24 @@ bool PhysikApp::startup() {
 	m_pPhysicsScene = new PhysicsScene();
 	m_pPhysicsScene->setGravity(vec2(0, 0));
 	m_pPhysicsScene->setTimeStep(0.01f);
+
+	vec2 normal1 = { 1,0 };
+	vec2 normal2 = { -3,1 };
+
+	normal1 = normalize(normal1);
+	normal2 = normalize(normal2);
+
+	//Plane* plane1 = new Plane(normal1, -10.5f);
+	//Plane* plane2 = new Plane(normal2, 0.0f);
+	//m_pPhysicsScene->AddActor(plane1);
+	//m_pPhysicsScene->AddActor(plane2);
+
+	Box* box1 = new Box({ 5,5 }, { 20, 20 }, { 0,0 }, 1, { 0,0,1,1 }, true);
+	Box* box2 = new Box({ 5,5 }, { 0, 45 }, { 0,0 }, 1, { 0,0,1,1 }, true);
+	m_pPhysicsScene->AddActor(box1);
+	m_pPhysicsScene->AddActor(box2);
+	box1->applyForce({ -5,0 });
+	box2->applyForce({ 0,-5 });
 
 	Sphere* ball1 = new Sphere(vec2(-20, 0), vec2(0, 0), 4.0f, 4, vec4(1, 0, 0, 1));
 	Sphere* ball2 = new Sphere(vec2(20, 0), vec2(0, 0), 4.0f, 4, vec4(0, 1, 0, 1));

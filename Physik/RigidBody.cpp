@@ -21,7 +21,9 @@ void Rigidbody::fixedUpdate(glm::vec2 gravity, float timeStep)
 
 void Rigidbody::debug()
 {
-	printf(" MY id %i", (int)m_ShapeId);
+	printf(" ID %i ", (int)m_ShapeId);
+	printf(" POS x %f, y %f ", m_position.x, m_position.y);
+	printf(" VEL x %f, y %f ", m_velocity.x, m_velocity.y);
 	printf("\n");
 }
 

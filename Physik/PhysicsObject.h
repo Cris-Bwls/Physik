@@ -18,6 +18,8 @@ public:
 	virtual void makeGizmo() = 0;
 	virtual void resetPosition() {};
 
+	inline ShapeID getShapeID() { return m_ShapeId; };
+
 protected:
 	PhysicsObject(ShapeID shapeID) : m_ShapeId(shapeID) {};
 	ShapeID m_ShapeId;
