@@ -21,9 +21,15 @@
     <ClCompile Include="Physik3DApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CollisionTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Physik3DApp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

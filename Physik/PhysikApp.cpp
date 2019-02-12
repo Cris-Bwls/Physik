@@ -21,7 +21,8 @@ PhysikApp::~PhysikApp() {
 bool PhysikApp::startup() {
 	
 	// increase the 2d line count to maximize the number of objects we can draw
-	aie::Gizmos::create(255U, 255U, 65535U, 65535U);
+	aie::Gizmos::create(255U, 255U, 65535U, 65535U);
+
 
 	m_2dRenderer = new aie::Renderer2D();
 
@@ -53,7 +54,8 @@ bool PhysikApp::startup() {
 	box2->applyForce({ 0,-5 });
 
 	Sphere* ball1 = new Sphere(vec2(-20, 0), vec2(0, 0), 4.0f, 4, vec4(1, 0, 0, 1));
-	Sphere* ball2 = new Sphere(vec2(20, 0), vec2(0, 0), 4.0f, 4, vec4(0, 1, 0, 1));
+	Sphere* ball2 = new Sphere(vec2(20, 0), vec2(0, 0), 4.0f, 4, vec4(0, 1, 0, 1));
+
 	m_pPhysicsScene->AddActor(ball1);
 	m_pPhysicsScene->AddActor(ball2);
 	ball1->applyForce(vec2(15, 0));
@@ -78,7 +80,8 @@ void PhysikApp::update(float deltaTime) {
 
 	aie::Gizmos::clear();
 	m_pPhysicsScene->Update(deltaTime);
-	m_pPhysicsScene->UpdateGizmos();
+	m_pPhysicsScene->UpdateGizmos();
+
 
 	// exit the application
 	if (input->isKeyDown(aie::INPUT_KEY_ESCAPE))
@@ -97,7 +100,8 @@ void PhysikApp::draw() {
 	static float aspectRatio = 16 / 9.f;
 	static float bottom = 100.0f / aspectRatio;
 	aie::Gizmos::draw2D(glm::ortho<float>(-100, 100,
-		-bottom, bottom, -1.0f, 1.0f));
+		-bottom, bottom, -1.0f, 1.0f));
+
 	
 	// output some text, uses the last used colour
 	m_2dRenderer->drawText(m_font, "Press ESC to quit", 0, 0);
