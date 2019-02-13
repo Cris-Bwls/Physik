@@ -10,6 +10,12 @@ using std::vector;
 
 class PhysicsObject;
 
+struct CollisionInfo
+{
+	bool bCollision;
+	glm::vec2 collNormal;
+};
+
 class PhysicsScene
 {
 public:
@@ -26,15 +32,15 @@ public:
 
 	void checkForCollision(); 
 
-	static bool plane2Plane(PhysicsObject* obj1, PhysicsObject* obj2); 
-	static bool plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
-	static bool plane2Box(PhysicsObject* obj1, PhysicsObject* obj2);
-	static bool sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2);
-	static bool sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
-	static bool sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2);
-	static bool box2Plane(PhysicsObject* obj1, PhysicsObject* obj2);
-	static bool box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
-	static bool box2Box(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo plane2Plane(PhysicsObject* obj1, PhysicsObject* obj2); 
+	static CollisionInfo plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo plane2Box(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo box2Plane(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo box2Box(PhysicsObject* obj1, PhysicsObject* obj2);
 
 	void debugScene();
 protected:

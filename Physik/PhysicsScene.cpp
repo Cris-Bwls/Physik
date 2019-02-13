@@ -9,7 +9,7 @@
 
 #define DEBUG_FREQ 5
 
-typedef bool(*CollisionTest)(PhysicsObject*, PhysicsObject*);
+typedef CollisionInfo(*CollisionTest)(PhysicsObject*, PhysicsObject*);
 
 static CollisionTest collisionFuncs[(int)ShapeID::TOTAL][(int)ShapeID::TOTAL] =
 { 
@@ -127,26 +127,18 @@ void PhysicsScene::checkForCollision()
 	}
 }
 
-bool PhysicsScene::plane2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
+CollisionInfo PhysicsScene::plane2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
 {
-	if (obj1->getShapeID() == ShapeID::Plane && obj2->getShapeID() == ShapeID::Plane)
-	{
-		Plane* plane1 = (Plane*)obj1;
-		Plane* plane2 = (Plane*)obj2;
-
-		float fDot = dot(plane1->getNormal(), plane2->getNormal());
-		float fOriginSeperation = plane1->getDistance() - plane2->getDistance();
-
-		if (abs(fDot) != 1.0f || fOriginSeperation == 0)
-		{
-			return true;
-		}
-	}
-	return false;
+	CollisionInfo result;
+	result.bCollision = false;
+	return result;
 }
 
-bool PhysicsScene::plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj2)
+CollisionInfo PhysicsScene::plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj2)
 {
+	CollisionInfo result;
+	result.bCollision = false;
+
 	if (obj1->getShapeID() == ShapeID::Plane && obj2->getShapeID() == ShapeID::Sphere)
 	{
 		Plane* plane1 = (Plane*)obj1;
@@ -164,17 +156,19 @@ bool PhysicsScene::plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj2)
 		float intersection = sphere2->getRadius() - sphereToPlane;
 		if (intersection > 0)
 		{
-			auto vel2 = sphere2->getVelocity();
-			sphere2->applyForce(-vel2 * sphere2->getMass());
-
-			return true;
+			result.collNormal = collisionNormal;
+			result.bCollision = true;
+			return result;
 		}
 	}
-	return false;
+	return result;
 }
 
-bool PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
+CollisionInfo PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 {
+	CollisionInfo result;
+	result.bCollision = false;
+
 	if (obj1->getShapeID() == ShapeID::Plane && obj2->getShapeID() == ShapeID::Box)
 	{
 		Plane* plane1 = (Plane*)obj1;
@@ -199,18 +193,19 @@ bool PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 
 		if (bLBRTCollision || bLTRBCollision)
 		{
-			//COLLISION
-			auto vel2 = box2->getVelocity();
-			box2->applyForce(-vel2 * box2->getMass());
-
-			return true;
+			result.collNormal = collisionNormal;
+			result.bCollision = true;
+			return result;
 		}
 	}
-	return false;
+	return result;
 }
 
-bool PhysicsScene::sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
+CollisionInfo PhysicsScene::sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
 {
+	CollisionInfo result;
+	result.bCollision = false;
+
 	if (obj1->getShapeID() == ShapeID::Sphere && obj2->getShapeID() == ShapeID::Plane)
 	{
 		Sphere* sphere1 = (Sphere*)obj1;
@@ -218,11 +213,14 @@ bool PhysicsScene::sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
 
 		return plane2Sphere(plane2, sphere1);
 	}
-	return false;
+	return result;
 }
 
-bool PhysicsScene::sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2)
+CollisionInfo PhysicsScene::sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2)
 {
+	CollisionInfo result;
+	result.bCollision = false;
+
 	if (obj1->getShapeID() == ShapeID::Sphere && obj2->getShapeID() == ShapeID::Sphere)
 	{
 		Sphere* sphere1 = (Sphere*)obj1;
@@ -234,21 +232,20 @@ bool PhysicsScene::sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2)
 		// IF collision
 		if (seperation < fRadiusSum)
 		{
-			auto vel1 = sphere1->getVelocity();
-			auto vel2 = sphere2->getVelocity();
-
-			sphere1->applyForce(-vel1 * sphere1->getMass());
-			sphere2->applyForce(-vel2 * sphere2->getMass());
-
-			return true;
+			result.collNormal = normalize(sphere1->getPosition() - sphere2->getPosition());
+			result.bCollision = true;
+			return result;
 		}
 	}
 
-	return false;
+	return result;
 }
 
-bool PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
+CollisionInfo PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 {
+	CollisionInfo result;
+	result.bCollision = false;
+
 	if (obj1->getShapeID() == ShapeID::Sphere && obj2->getShapeID() == ShapeID::Box)
 	{
 		Sphere* sphere1 = (Sphere*)obj1;
@@ -258,63 +255,24 @@ bool PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		vec2 boxMin = box2->getPosition() - box2->getExtents();
 
 		vec2 spherePos = sphere1->getPosition();
-		vec2 clamp = spherePos;
+		vec2 v2Clamp = clamp(spherePos, boxMin, boxMax);
 
-		bool xIn = false;
-		bool yIn = false;
-
-		if (spherePos.x < boxMin.x)
+		v2Clamp -= spherePos;		
+		if (length(v2Clamp) <= sphere1->getRadius())
 		{
-			clamp.x = boxMin.x;
-		}
-		else if (spherePos.x > boxMax.x)
-		{
-			clamp.x = boxMax.x;
-		}
-		else
-		{
-			xIn = true;
-		}
-
-		if (spherePos.y < boxMin.y)
-		{
-			clamp.y = boxMin.y;
-		}
-		else if (spherePos.y > boxMax.y)
-		{
-			clamp.y = boxMax.y;
-		}
-		else
-		{
-			yIn = true;
-		}
-
-		if (xIn && yIn)
-		{
-			auto vel1 = sphere1->getVelocity();
-			auto vel2 = box2->getVelocity();
-
-			sphere1->applyForce(-vel1 * sphere1->getMass());
-			box2->applyForce(-vel2 * box2->getMass());
-			return true;
-		}
-
-		clamp -= spherePos;		
-		if (length(clamp) <= sphere1->getRadius())
-		{
-			auto vel1 = sphere1->getVelocity();
-			auto vel2 = box2->getVelocity();
-
-			sphere1->applyForce(-vel1 * sphere1->getMass());
-			box2->applyForce(-vel2 * box2->getMass());
-			return true;
+			result.collNormal = normalize(v2Clamp);
+			result.bCollision = true;
+			return result;
 		}
 	}
-	return false;
+	return result;
 }
 
-bool PhysicsScene::box2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
+CollisionInfo PhysicsScene::box2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
 {
+	CollisionInfo result;
+	result.bCollision = false;
+
 	if (obj1->getShapeID() == ShapeID::Box && obj2->getShapeID() == ShapeID::Plane)
 	{
 		Box* box1 = (Box*)obj1;
@@ -322,11 +280,14 @@ bool PhysicsScene::box2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
 
 		return plane2Box(plane2, box1);
 	}
-	return false;
+	return result;
 }
 
-bool PhysicsScene::box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2)
+CollisionInfo PhysicsScene::box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2)
 {
+	CollisionInfo result;
+	result.bCollision = false;
+
 	if (obj1->getShapeID() == ShapeID::Box && obj2->getShapeID() == ShapeID::Sphere)
 	{
 		Box* box1 = (Box*)obj1;
@@ -334,11 +295,14 @@ bool PhysicsScene::box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2)
 
 		return sphere2Box(sphere2, box1);
 	}
-	return false;
+	return result;
 }
 
-bool PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
+CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 {
+	CollisionInfo result;
+	result.bCollision = false;
+
 	if (obj1->getShapeID() == ShapeID::Box && obj2->getShapeID() == ShapeID::Box)
 	{
 		Box* box1 = (Box*)obj1;
@@ -350,21 +314,22 @@ bool PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		vec2 max2 = box2->getPosition() + box2->getExtents();
 		vec2 min2 = box2->getPosition() - box2->getExtents();
 
-		bool checkX = max1.x < min2.x || max2.x < min1.x;
-		bool checkY = max1.y < min2.y || max2.y < min1.y;
+		// EARLY EXITS
+		if (max1.x < min2.x) return result;
+		if (max2.x < min1.x) return result;
+		if (max1.y < min2.y) return result;
+		if (max2.y < min1.y) return result;
 
-		if (!(checkX || checkY))
-		{
-			auto vel1 = box1->getVelocity();
-			auto vel2 = box2->getVelocity();
+		auto vel1 = box1->getVelocity();
+		auto vel2 = box2->getVelocity();
 
-			box1->applyForce(-vel1 * box1->getMass());
-			box2->applyForce(-vel2 * box2->getMass());
+		box1->applyForce(-vel1 * box1->getMass());
+		box2->applyForce(-vel2 * box2->getMass());
 
-			return true;
-		}
+		result.bCollision = true;
+		return result;
 	}
-	return false;
+	return result;
 }
 
 void PhysicsScene::debugScene()

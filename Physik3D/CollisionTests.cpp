@@ -1,5 +1,5 @@
 #include "CollisionTests.h"
-
+#include"Plane.h"
 
 
 int CollisionTests::TestPointTriangle(vec3 const & point, vec3 const & a, vec3 const & b, vec3 const & c)
@@ -44,4 +44,17 @@ void CollisionTests::Barycentric(vec3 const & point, vec3 const & a, vec3 const 
 	u = nu * ood;
 	v = nv * ood;
 	w = 1.0f - u - v;
+}
+
+vec3 CollisionTests::ClosestPointOnPlane(vec3 const & point, Plane const & plane)
+{
+	vec3* pNormal = &plane.GetNormal();
+	float t = dot(*pNormal, point) - plane.GetDistance();
+	return point - t * (*pNormal);
+}
+
+float CollisionTests::DistPointPlane(vec3 const & point, Plane const & plane)
+{
+	vec3* pNormal = &plane.GetNormal();
+	return (dot(*pNormal, point) - plane.GetDistance()) / dot(*pNormal, *pNormal);
 }

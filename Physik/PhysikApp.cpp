@@ -46,20 +46,20 @@ bool PhysikApp::startup() {
 	//m_pPhysicsScene->AddActor(plane1);
 	//m_pPhysicsScene->AddActor(plane2);
 
-	Box* box1 = new Box({ 5,5 }, { 20, 20 }, { 0,0 }, 1, { 0,0,1,1 }, true);
-	Box* box2 = new Box({ 5,5 }, { 0, 45 }, { 0,0 }, 1, { 0,0,1,1 }, true);
+	Box* box1 = new Box({ 5,5 }, { 20, 20 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
+	Box* box2 = new Box({ 5,5 }, { 0, 0 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
 	m_pPhysicsScene->AddActor(box1);
 	m_pPhysicsScene->AddActor(box2);
 	box1->applyForce({ -5,0 });
-	box2->applyForce({ 0,-5 });
+	box2->applyForce({ 0,0 });
 
-	Sphere* ball1 = new Sphere(vec2(-20, 0), vec2(0, 0), 4.0f, 4, vec4(1, 0, 0, 1));
-	Sphere* ball2 = new Sphere(vec2(20, 0), vec2(0, 0), 4.0f, 4, vec4(0, 1, 0, 1));
+	Sphere* ball1 = new Sphere(vec2(-20, 0), vec2(0, 0), 4.0f, 1.0f, 4, vec4(1, 0, 0, 1));
+	Sphere* ball2 = new Sphere(vec2(0, -20), vec2(0, 0), 4.0f, 1.0f, 4, vec4(0, 1, 0, 1));
 
 	m_pPhysicsScene->AddActor(ball1);
 	m_pPhysicsScene->AddActor(ball2);
 	ball1->applyForce(vec2(15, 0));
-	ball2->applyForce(vec2(-15, 0));
+	ball2->applyForce(vec2(0, 10));
 
 	return true;
 }

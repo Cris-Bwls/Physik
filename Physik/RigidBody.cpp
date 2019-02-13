@@ -1,12 +1,13 @@
 #include "RigidBody.h"
 #include <iostream>
 
-Rigidbody::Rigidbody(ShapeID shapeID, glm::vec2 position, glm::vec2 velocity, float rotation, float mass) : PhysicsObject::PhysicsObject(shapeID)
+Rigidbody::Rigidbody(ShapeID shapeID, glm::vec2 position, glm::vec2 velocity, float rotation, float mass, float elasticity) : PhysicsObject::PhysicsObject(shapeID)
 {
 	m_position = position; 
 	m_velocity = velocity;
 	m_rotation = rotation;
 	m_mass = mass;
+	m_elasticity = elasticity;
 }
 
 Rigidbody::~Rigidbody()

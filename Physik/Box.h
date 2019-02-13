@@ -6,7 +6,7 @@ class Box :
 {
 public:
 	Box();
-	Box(glm::vec2 extents, glm::vec2 position, glm::vec2 velocity, float mass, glm::vec4 colour, bool bIsFilled);
+	Box(glm::vec2 extents, glm::vec2 position, glm::vec2 velocity, float mass, float elasticity, glm::vec4 colour, bool bIsFilled);
 	~Box();
 
 	virtual void makeGizmo();
