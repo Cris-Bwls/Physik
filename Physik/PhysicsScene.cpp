@@ -308,23 +308,40 @@ CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		Box* box1 = (Box*)obj1;
 		Box* box2 = (Box*)obj2;
 
-		vec2 max1 = box1->getPosition() + box1->getExtents();
-		vec2 min1 = box1->getPosition() - box1->getExtents();
+		vec2 box1Pos = box1->getPosition();
+		vec2 box2Pos = box2->getPosition();
 
-		vec2 max2 = box2->getPosition() + box2->getExtents();
-		vec2 min2 = box2->getPosition() - box2->getExtents();
+		vec2 box1Extent = box1->getExtents();
+		vec2 box2Extent = box2->getExtents();
 
-		// EARLY EXITS
-		if (max1.x < min2.x) return result;
-		if (max2.x < min1.x) return result;
-		if (max1.y < min2.y) return result;
-		if (max2.y < min1.y) return result;
+		if (abs(box1Pos.x - box2Pos.x) > (box1Extent.x + box2Extent.x)) return result;
+		if (abs(box1Pos.y - box2Pos.y) > (box1Extent.y + box2Extent.y)) return result;
 
-		auto vel1 = box1->getVelocity();
-		auto vel2 = box2->getVelocity();
+		vec2 box1Close = box2Pos;
+		box1Close = max(box1Close, box1Pos - box1Extent);
+		box1Close = min(box1Close, box1Pos + box1Extent);
+		
+		vec2 box2Close = box1Pos;
+		box2Close = max(box1Close, box2Pos - box2Extent);
+		box2Close = min(box1Close, box2Pos + box2Extent);
 
-		box1->applyForce(-vel1 * box1->getMass());
-		box2->applyForce(-vel2 * box2->getMass());
+		vec2 avgClose = (box1Close + box2Close) * 0.5f;		
+		vec2 normalCheck = avgClose - box1Pos;
+
+		if (abs(normalCheck.x) > abs(normalCheck.y))
+		{
+			if (normalCheck.x > 0)
+				result.collNormal = { 1,0 };
+			else
+				result.collNormal = { -1,0 };
+		}
+		else
+		{
+			if (normalCheck.y > 0)
+				result.collNormal = { 0,1 };
+			else
+				result.collNormal = { 0,-1 };
+		}
 
 		result.bCollision = true;
 		return result;
