@@ -20,10 +20,6 @@ Plane::~Plane()
 {
 }
 
-void Plane::fixedUpdate(vec2 gravity, float timeStep)
-{
-}
-
 void Plane::makeGizmo()
 {
 	float lineSegmentLength = 300;
@@ -38,4 +34,15 @@ void Plane::makeGizmo()
 
 void Plane::resetPosition()
 {
+}
+
+void Plane::resolveCollision(Rigidbody * actor2, vec2 const & normal)
+{
+
+	float j = dot(-(1 + actor2->getElasticity()) * actor2->getVelocity(), normal) /
+		dot(normal, normal * (1 / actor2->getMass()));
+
+	vec2 force = normal * j;
+
+	actor2->applyForce(force);
 }

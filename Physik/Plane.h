@@ -1,6 +1,7 @@
 #pragma once
 #include "PhysicsObject.h"
 #include <glm/ext.hpp>
+#include "RigidBody.h"
 
 using namespace glm;
 
@@ -11,13 +12,15 @@ public:
 	Plane(glm::vec2 normal, float distance);
 	~Plane();
 
-	virtual void fixedUpdate(vec2 gravity, float timeStep);
+	virtual void fixedUpdate(vec2 const& gravity, float timeStep) {};
 	virtual void makeGizmo();
 	virtual	void resetPosition();
 	virtual void debug() {};
 
 	inline vec2 getNormal() { return m_normal; };
 	inline float getDistance() { return m_distanceToOrigin; };
+
+	void Plane::resolveCollision(Rigidbody* actor2, vec2 const& normal);
 
 protected:
 	vec2 m_normal;

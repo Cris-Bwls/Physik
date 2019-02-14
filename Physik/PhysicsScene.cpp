@@ -157,7 +157,11 @@ CollisionInfo PhysicsScene::plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj
 		if (intersection > 0)
 		{
 			result.collNormal = collisionNormal;
-			result.bCollision = true;
+			sphere2->setPosition(sphere2->getPosition() + collisionNormal * intersection);
+			result.bCollision = true;			
+
+			plane1->resolveCollision(sphere2, result.collNormal);
+
 			return result;
 		}
 	}
@@ -195,6 +199,20 @@ CollisionInfo PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		{
 			result.collNormal = collisionNormal;
 			result.bCollision = true;
+
+			float test;
+			if (bLBRTCollision)
+				test = min(abs(fLBVerticeToPlane), abs(fRTVerticeToPlane));
+			else
+				test = min(abs(fLTVerticeToPlane), abs(fRBVerticeToPlane));
+
+			box2->setPosition(box2->getPosition() - normalize(box2->getVelocity()) * test);
+
+			plane1->resolveCollision(box2, result.collNormal);
+
+			//TEST
+			box2->SetIsFilled(!box2->GetIsFilled());
+
 			return result;
 		}
 	}
@@ -234,6 +252,12 @@ CollisionInfo PhysicsScene::sphere2Sphere(PhysicsObject* obj1, PhysicsObject* ob
 		{
 			result.collNormal = normalize(sphere1->getPosition() - sphere2->getPosition());
 			result.bCollision = true;
+
+			float distance = seperation - fRadiusSum;
+			sphere1->setPosition(sphere1->getPosition() + normalize(sphere1->getVelocity()) * distance);
+
+			sphere1->resolveCollision(sphere2, result.collNormal);
+
 			return result;
 		}
 	}
@@ -262,6 +286,12 @@ CollisionInfo PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		{
 			result.collNormal = normalize(v2Clamp);
 			result.bCollision = true;
+
+			sphere1->resolveCollision(box2, result.collNormal);
+
+			//TEST
+			box2->SetIsFilled(!box2->GetIsFilled());
+
 			return result;
 		}
 	}
@@ -344,6 +374,13 @@ CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		}
 
 		result.bCollision = true;
+
+		box1->resolveCollision(box2, result.collNormal);
+
+		//TEST
+		box1->SetIsFilled(!box1->GetIsFilled());
+		box2->SetIsFilled(!box2->GetIsFilled());
+
 		return result;
 	}
 	return result;

@@ -1,6 +1,8 @@
 #include "RigidBody.h"
 #include <iostream>
 
+using namespace glm;
+
 Rigidbody::Rigidbody(ShapeID shapeID, glm::vec2 position, glm::vec2 velocity, float rotation, float mass, float elasticity) : PhysicsObject::PhysicsObject(shapeID)
 {
 	m_position = position; 
@@ -14,7 +16,7 @@ Rigidbody::~Rigidbody()
 {
 }
 
-void Rigidbody::fixedUpdate(glm::vec2 gravity, float timeStep)
+void Rigidbody::fixedUpdate(vec2 const& gravity, float timeStep)
 {
 	applyForce(gravity * m_mass * timeStep);
 	m_position += m_velocity * timeStep;
@@ -28,13 +30,26 @@ void Rigidbody::debug()
 	printf("\n");
 }
 
-void Rigidbody::applyForce(glm::vec2 force)
+void Rigidbody::applyForce(vec2 const& force)
 {
 	m_velocity += force / m_mass;
 }
 
-void Rigidbody::applyForceToActor(Rigidbody* actor2, glm::vec2 force)
+void Rigidbody::applyForceToActor(Rigidbody* actor2, vec2 const& force)
 {
 	applyForce(force);
 	actor2->applyForce(-force);
+}
+
+void Rigidbody::resolveCollision(Rigidbody* actor2, vec2 const& normal)
+{
+	vec2 relativeVelocity = actor2->getVelocity() - m_velocity;
+	float elasticity = (actor2->getElasticity() + m_elasticity) / 2;
+
+	float j = dot(-(1 + elasticity) * relativeVelocity, normal) /
+				dot(normal, normal * ((1 / m_mass + (1 / actor2->getMass()))));
+
+	vec2 force = normal * j;
+
+	applyForceToActor(actor2, -force);
 }
