@@ -254,7 +254,19 @@ CollisionInfo PhysicsScene::sphere2Sphere(PhysicsObject* obj1, PhysicsObject* ob
 			result.bCollision = true;
 
 			float distance = seperation - fRadiusSum;
-			sphere1->setPosition(sphere1->getPosition() + normalize(sphere1->getVelocity()) * distance);
+			vec2 offset = normalize(sphere1->getVelocity()) * distance;
+			sphere1->setPosition(sphere1->getPosition() + offset);
+
+			float debug = length(offset);
+			if (debug > 1.0f)
+			{
+				debug = offset.x;
+			}
+			else
+			{
+				debug = offset.y;
+			}
+				
 
 			sphere1->resolveCollision(sphere2, result.collNormal);
 
