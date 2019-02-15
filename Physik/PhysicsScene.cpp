@@ -157,7 +157,7 @@ CollisionInfo PhysicsScene::plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj
 		if (intersection > 0)
 		{
 			result.collNormal = collisionNormal;
-			sphere2->setPosition(sphere2->getPosition() + collisionNormal * intersection);
+			sphere2->setPosition(sphere2->getPosition() - normalize(sphere2->getVelocity()) * intersection);
 			result.bCollision = true;			
 
 			plane1->resolveCollision(sphere2, result.collNormal);
@@ -254,8 +254,21 @@ CollisionInfo PhysicsScene::sphere2Sphere(PhysicsObject* obj1, PhysicsObject* ob
 			result.bCollision = true;
 
 			float distance = seperation - fRadiusSum;
-			vec2 offset = normalize(sphere1->getVelocity()) * distance;
-			sphere1->setPosition(sphere1->getPosition() + offset);
+
+			float sphere1Energy = length(sphere1->getVelocity() * sphere1->getMass());
+			float sphere2Energy = length(sphere2->getVelocity() * sphere2->getMass());
+
+			float ratio = sphere1Energy / (sphere1Energy + sphere2Energy);
+
+			auto restitute = sphere1;
+			vec2 offset = normalize(restitute->getVelocity()) * distance * ratio;
+			restitute->setPosition(restitute->getPosition() + offset);
+
+			restitute = sphere2;
+			offset = normalize(restitute->getVelocity()) * distance * (1 - ratio);
+			restitute->setPosition(restitute->getPosition() + offset);
+
+
 
 			float debug = length(offset);
 			if (debug > 1.0f)
@@ -265,8 +278,7 @@ CollisionInfo PhysicsScene::sphere2Sphere(PhysicsObject* obj1, PhysicsObject* ob
 			else
 			{
 				debug = offset.y;
-			}
-				
+			}				
 
 			sphere1->resolveCollision(sphere2, result.collNormal);
 
@@ -296,6 +308,28 @@ CollisionInfo PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		v2Clamp -= spherePos;		
 		if (length(v2Clamp) <= sphere1->getRadius())
 		{
+
+			float distance = length(v2Clamp) - sphere1->getRadius();
+
+			float sphere1Energy = length(sphere1->getVelocity() * sphere1->getMass());
+			float box2Energy = length(box2->getVelocity() * box2->getMass());
+
+			float ratio;
+			if (abs(sphere1Energy) > 0)
+				ratio = sphere1Energy / (sphere1Energy + box2Energy);
+			else
+				ratio = 0;
+
+			Rigidbody* restitute = (Rigidbody*)sphere1;
+			vec2 offset = normalize(restitute->getVelocity()) * distance * ratio;
+			if (abs(offset.x) == INFINITY)
+
+			restitute->setPosition(restitute->getPosition() + offset);
+			
+			restitute = (Rigidbody*)box2;
+			offset = normalize(restitute->getVelocity()) * distance * (1.0f - ratio);
+			restitute->setPosition(restitute->getPosition() + offset);
+
 			result.collNormal = normalize(v2Clamp);
 			result.bCollision = true;
 
@@ -353,40 +387,64 @@ CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		vec2 box1Pos = box1->getPosition();
 		vec2 box2Pos = box2->getPosition();
 
-		vec2 box1Extent = box1->getExtents();
-		vec2 box2Extent = box2->getExtents();
+		vec2 box1Min = box1Pos - box1->getExtents();
+		vec2 box1Max = box1Pos + box1->getExtents();
+		vec2 box2Min = box2Pos - box2->getExtents();
+		vec2 box2Max = box2Pos + box2->getExtents();
 
-		if (abs(box1Pos.x - box2Pos.x) > (box1Extent.x + box2Extent.x)) return result;
-		if (abs(box1Pos.y - box2Pos.y) > (box1Extent.y + box2Extent.y)) return result;
-
-		vec2 box1Close = box2Pos;
-		box1Close = max(box1Close, box1Pos - box1Extent);
-		box1Close = min(box1Close, box1Pos + box1Extent);
-		
-		vec2 box2Close = box1Pos;
-		box2Close = max(box1Close, box2Pos - box2Extent);
-		box2Close = min(box1Close, box2Pos + box2Extent);
-
-		vec2 avgClose = (box1Close + box2Close) * 0.5f;		
-		vec2 normalCheck = avgClose - box1Pos;
-
-		if (abs(normalCheck.x) > abs(normalCheck.y))
+		static const vec2 faces[4] =
 		{
-			if (normalCheck.x > 0)
-				result.collNormal = { 1,0 };
-			else
-				result.collNormal = { -1,0 };
+			vec2(-1,  0), // 'left' face normal (-x direction)
+			vec2(1,  0), // 'right' face normal (+x direction)
+			vec2(0, -1), // 'bottom' face normal (-y direction)
+			vec2(0,  1), // 'top' face normal (+y direction)
+		};
+
+		float distances[4] =
+		{
+			(box2Max.x - box1Min.x), // distance of box 'b' to face on 'left' side of 'a'.
+			(box1Max.x - box2Min.x), // distance of box 'b' to face on 'right' side of 'a'.
+			(box2Max.y - box1Min.y), // distance of box 'b' to face on 'bottom' side of 'a'.
+			(box1Max.y - box2Min.y), // distance of box 'b' to face on 'top' side of 'a'.
+		};
+
+		vec2 collisionNormal;
+		float pen;
+
+		for (int i = 0; i < 4; i++)
+		{
+			// box does not intersect face. So boxes don't intersect at all.
+			if (distances[i] < 0.0f)
+				return result;
+
+			// face of least intersection depth. That's our candidate.
+			if ((i == 0) || (distances[i] < pen))
+			{
+				collisionNormal = faces[i];
+				pen = distances[i];
+			}
 		}
+
+		float box1Energy = length(box1->getVelocity() * box1->getMass());
+		float box2Energy = length(box2->getVelocity() * box2->getMass());
+
+		float ratio;
+		if (abs(box1Energy) > 0)
+			ratio = box1Energy / (box1Energy + box2Energy);
 		else
-		{
-			if (normalCheck.y > 0)
-				result.collNormal = { 0,1 };
-			else
-				result.collNormal = { 0,-1 };
-		}
+			ratio = 0;
 
+		Rigidbody* restitute = (Rigidbody*)box1;
+		vec2 offset = normalize(restitute->getVelocity()) * pen * ratio;
+		restitute->setPosition(restitute->getPosition() + offset);
+
+		restitute = (Rigidbody*)box2;
+		offset = normalize(restitute->getVelocity()) * pen * (1.0f - ratio);
+		restitute->setPosition(restitute->getPosition() + offset);
+
+		result.collNormal = collisionNormal;
 		result.bCollision = true;
-
+			   
 		box1->resolveCollision(box2, result.collNormal);
 
 		//TEST

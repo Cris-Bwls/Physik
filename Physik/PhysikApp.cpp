@@ -35,41 +35,34 @@ bool PhysikApp::startup() {
 	m_pPhysicsScene->setGravity(vec2(0, 0));
 	m_pPhysicsScene->setTimeStep(0.01f);
 
-	vec2 normal1 = { 1,0 };
-	vec2 normal2 = { 0,1 };
-
-	normal1 = normalize(normal1);
-	normal2 = normalize(normal2);
+	vec2 normalLeft = normalize(vec2(1,0));
+	vec2 normalRight = normalize(vec2(1,0));
+	vec2 normalDown = normalize(vec2(0,1));
+	vec2 normalUp = normalize(vec2(0,1));
 
 	float fAspectRatio = getWindowWidth() / getWindowHeight();
 
-	Plane* plane1 = new Plane(normal1, -90.0f);
-	Plane* plane2 = new Plane(normal1, 90.0f);
-	Plane* plane3 = new Plane(normal2, 56.0f);// 90.0f / fAspectRatio);
-	Plane* plane4 = new Plane(normal2, -56.0f);//-90.0f / fAspectRatio);
+	Plane* plane1 = new Plane(normalLeft, -90.0f);
+	Plane* plane2 = new Plane(normalRight, 90.0f);
+	Plane* plane3 = new Plane(normalUp, 56.0f);// 90.0f / fAspectRatio);
+	Plane* plane4 = new Plane(normalDown, -56.0f);//-90.0f / fAspectRatio);
 	m_pPhysicsScene->AddActor(plane1);
 	m_pPhysicsScene->AddActor(plane2);
 	m_pPhysicsScene->AddActor(plane3);
 	m_pPhysicsScene->AddActor(plane4);
 
 	Box* box1 = new Box({ 5,5 }, { 20, 20 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
-	//Box* box2 = new Box({ 5,5 }, { 0, 0 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
-	//Box* box3 = new Box({ 5,5 }, { 30, 0 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
+	Box* box2 = new Box({ 5,5 }, { 0, 0 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
+	Box* box3 = new Box({ 5,5 }, { 40, 0 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
 	//Box* box4 = new Box({ 5,5 }, { 0, 30 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
-	//Box* box5 = new Box({ 5,5 }, { 15, 10 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
-	//Box* box6 = new Box({ 5,5 }, {10, 15 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
+	//Box* box5 = new Box({ 5,5 }, { 60, 10 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
+	//Box* box6 = new Box({ 5,5 }, {-40, 15 }, { 0,0 }, 1, 1.0f, { 0,0,1,1 }, true);
 	m_pPhysicsScene->AddActor(box1);
-	//m_pPhysicsScene->AddActor(box2);
-	//m_pPhysicsScene->AddActor(box3);
+	m_pPhysicsScene->AddActor(box2);
+	m_pPhysicsScene->AddActor(box3);
 	//m_pPhysicsScene->AddActor(box4);
 	//m_pPhysicsScene->AddActor(box5);
 	//m_pPhysicsScene->AddActor(box6);
-	box1->applyForce({ 0,-20 });
-	//box2->applyForce({ -5,0 });
-	//box3->applyForce({ -5,0 });
-	//box4->applyForce({ -5,0 });
-	//box5->applyForce({ -5,0 });
-	//box6->applyForce({ -5,0 });
 
 	Sphere* ball1 = new Sphere(vec2(-20, 0), vec2(0, 0), 4.0f, 1.0f, 4, vec4(1, 0, 0, 1));
 	Sphere* ball2 = new Sphere(vec2(0, -20), vec2(0, 0), 4.0f, 1.0f, 4, vec4(0, 1, 0, 1));

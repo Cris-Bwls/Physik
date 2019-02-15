@@ -28,6 +28,7 @@ void Rigidbody::debug()
 	printf(" POS x %f, y %f ", m_position.x, m_position.y);
 	printf(" VEL x %f, y %f ", m_velocity.x, m_velocity.y);
 	printf("\n");
+
 }
 
 void Rigidbody::applyForce(vec2 const& force)

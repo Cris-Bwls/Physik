@@ -404,3 +404,30 @@ ASALocalRun/
 healthchecksdb
 
 # End of https://www.gitignore.io/api/c++,windows,visualstudio
+bootstrap/
+
+dependencies/glfw/
+
+dependencies/glm/
+
+dependencies/imgui/
+
+dependencies/stb/data/
+
+project2D/
+
+project3D/
+
+tools/ProjectTemplates/
+
+LICENSE
+
+dependencies/stb/tools/unicode/
+
+dependencies/stb/tools/
+
+dependencies/stb/tests/vorbseek/
+
+dependencies/stb/tests/
+
+dependencies/stb/
