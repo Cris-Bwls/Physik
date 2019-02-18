@@ -77,25 +77,6 @@ void PhysicsScene::Update(float dt)
 		// scene management in place)
 
 		checkForCollision();
-
-		/*for (auto pActor : m_actors) {
-			for (auto pOther : m_actors) {
-				if (pActor == pOther)
-					continue;
-				if (std::find(dirty.begin(), dirty.end(), pActor) != dirty.end() &&
-					std::find(dirty.begin(), dirty.end(), pOther) != dirty.end())
-					continue;
-				Rigidbody* pRigid = dynamic_cast<Rigidbody*>(pActor);
-				if (pRigid->checkCollision(pOther) == true) {
-					pRigid->applyForceToActor(
-						dynamic_cast<Rigidbody*>(pOther),
-						pRigid->getVelocity() * pRigid->getMass());
-					dirty.push_back(pRigid);
-					dirty.push_back(pOther);
-				}
-			}
-		}
-		dirty.clear();*/
 	}
 }
 
@@ -123,7 +104,25 @@ void PhysicsScene::checkForCollision()
 			auto collisionFuncPtr = collisionFuncs[shapeID1][shapeID2];
 			if (collisionFuncPtr)
 			{
-				collisionFuncPtr(object1, object2);
+				auto info = collisionFuncPtr(object1, object2);
+				if (info.bCollision)
+				{
+					if (shapeID1 == (int)ShapeID::Plane)
+					{
+						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object2);
+						((Plane*)object1)->resolveCollision((RigidBody*)object2, info.collNormal);
+					}
+					else if (shapeID2 == (int)ShapeID::Plane)
+					{
+						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object1);
+						((Plane*)object2)->resolveCollision((RigidBody*)object2, info.collNormal);
+					}
+					else
+					{
+						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object1, (RigidBody*)object2);
+						((RigidBody*)object1)->resolveCollision((RigidBody*)object2, info.collNormal);
+					}
+				}
 			}
 		}
 	}
@@ -159,10 +158,8 @@ CollisionInfo PhysicsScene::plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj
 		if (intersection > 0)
 		{
 			result.collNormal = collisionNormal;
-			result.bCollision = true;			
-
-			Restitution(-intersection, collisionNormal, sphere2);
-			plane1->resolveCollision(sphere2, result.collNormal);
+			result.bCollision = true;
+			result.fPenetration = intersection;
 
 			return result;
 		}
@@ -199,17 +196,15 @@ CollisionInfo PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 
 		if (bLBRTCollision || bLTRBCollision)
 		{
-			result.collNormal = collisionNormal;
-			result.bCollision = true;
-
 			float pen;
 			if (bLBRTCollision)
 				pen = min(abs(fLBVerticeToPlane), abs(fRTVerticeToPlane));
 			else
 				pen = min(abs(fLTVerticeToPlane), abs(fRBVerticeToPlane));
 
-			Restitution(-pen, collisionNormal, box2);
-			plane1->resolveCollision(box2, result.collNormal);
+			result.collNormal = collisionNormal;
+			result.bCollision = true;
+			result.fPenetration = pen;
 
 			//TEST
 			box2->SetIsFilled(!box2->GetIsFilled());
@@ -256,13 +251,12 @@ CollisionInfo PhysicsScene::sphere2Sphere(PhysicsObject* obj1, PhysicsObject* ob
 		// IF collision
 		if (seperation < fRadiusSum)
 		{
+			float pen = seperation - fRadiusSum;
+
+			result.fPenetration = pen;
 			result.collNormal = normalize(sphere1->getPosition() - sphere2->getPosition());
 			result.bCollision = true;
-
-			float pen = seperation - fRadiusSum;
-									
-			Restitution(pen, result.collNormal, sphere1, sphere2);
-			sphere1->resolveCollision(sphere2, result.collNormal);
+			result.fPenetration = pen;
 
 			return result;
 		}
@@ -298,12 +292,10 @@ CollisionInfo PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 				result.collNormal = normalize(v2Clamp);
 
 			result.bCollision = true;
+			result.fPenetration = pen;
 
 			if (pen != pen)
 				printf("FUCK");
-
-			Restitution(pen, result.collNormal, sphere1, box2);
-			sphere1->resolveCollision(box2, result.collNormal);
 
 			//TEST
 			box2->SetIsFilled(!box2->GetIsFilled());
@@ -402,9 +394,7 @@ CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 
 		result.collNormal = collisionNormal;
 		result.bCollision = true;
-   
-		Restitution(pen, collisionNormal, box1, box2);
-		box1->resolveCollision(box2, result.collNormal);
+		result.fPenetration = pen;
 
 		//TEST
 		box1->SetIsFilled(!box1->GetIsFilled());
