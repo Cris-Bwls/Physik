@@ -20,7 +20,7 @@ public:
 	inline vec2 getNormal() { return m_normal; };
 	inline float getDistance() { return m_distanceToOrigin; };
 
-	void Plane::resolveCollision(Rigidbody* actor2, vec2 const& normal);
+	void Plane::resolveCollision(RigidBody* actor2, vec2 const& normal);
 
 protected:
 	vec2 m_normal;

@@ -36,7 +36,7 @@ void Plane::resetPosition()
 {
 }
 
-void Plane::resolveCollision(Rigidbody * actor2, vec2 const & normal)
+void Plane::resolveCollision(RigidBody * actor2, vec2 const & normal)
 {
 
 	float j = dot(-(1 + actor2->getElasticity()) * actor2->getVelocity(), normal) /

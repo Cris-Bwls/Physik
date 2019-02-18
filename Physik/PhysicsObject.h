@@ -6,6 +6,7 @@ enum class ShapeID : int
 	Plane = 0,
 	Sphere,
 	Box,
+	Poly,
 
 	TOTAL
 };

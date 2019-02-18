@@ -2,7 +2,7 @@
 #include "RigidBody.h"
 
 class Box :
-	public Rigidbody
+	public RigidBody
 {
 public:
 	Box();

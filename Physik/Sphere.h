@@ -1,7 +1,7 @@
 #pragma once
 #include "RigidBody.h"
 
-class Sphere : public Rigidbody
+class Sphere : public RigidBody
 {
 public:
 	Sphere(glm::vec2 position, glm::vec2 velocity,

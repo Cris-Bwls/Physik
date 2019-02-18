@@ -4,7 +4,7 @@
 using aie::Gizmos;
 
 Sphere::Sphere(glm::vec2 position, glm::vec2 velocity, float mass, float elasticity, float radius, glm::vec4 colour) :
-	Rigidbody::Rigidbody(ShapeID::Sphere, position, velocity, 0, mass, elasticity)
+	RigidBody::RigidBody(ShapeID::Sphere, position, velocity, 0, mass, elasticity)
 {
 	m_radius = radius;
 	m_colour = colour;
@@ -17,6 +17,9 @@ Sphere::~Sphere()
 void Sphere::makeGizmo()
 {
 	Gizmos::add2DCircle(m_position, m_radius, 69U, m_colour);
+
+	glm::vec2 startPoint = m_position + (glm::normalize(m_velocity) * m_radius);
+	DebugVelocity(startPoint);
 }
 
 bool Sphere::checkCollision(PhysicsObject * pOther)

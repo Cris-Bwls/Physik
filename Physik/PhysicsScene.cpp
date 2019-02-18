@@ -13,15 +13,17 @@ typedef CollisionInfo(*CollisionTest)(PhysicsObject*, PhysicsObject*);
 
 static CollisionTest collisionFuncs[(int)ShapeID::TOTAL][(int)ShapeID::TOTAL] =
 { 
-{PhysicsScene::plane2Plane, PhysicsScene::plane2Sphere, PhysicsScene::plane2Box},
-{PhysicsScene::sphere2Plane, PhysicsScene::sphere2Sphere, PhysicsScene::plane2Box},
-{PhysicsScene::box2Plane, PhysicsScene::box2Sphere, PhysicsScene::box2Box}
+{PhysicsScene::plane2Plane, PhysicsScene::plane2Sphere, PhysicsScene::plane2Box, PhysicsScene::plane2Poly},
+{PhysicsScene::sphere2Plane, PhysicsScene::sphere2Sphere, PhysicsScene::sphere2Box, PhysicsScene::sphere2Poly},
+{PhysicsScene::box2Plane, PhysicsScene::box2Sphere, PhysicsScene::box2Box, PhysicsScene::box2Poly}
 };
 
 PhysicsScene::PhysicsScene()
 {
 	m_timeStep = 0.01f;
 	m_gravity = { 0,0 };
+
+	m_recordedOffset = 0;
 }
 
 
@@ -54,7 +56,7 @@ bool PhysicsScene::RemoveActor(PhysicsObject* actor)
 
 void PhysicsScene::Update(float dt)
 {
-	debugScene();
+	//debugScene();
 
 	static float accumulatedTime = 0.0f;
 	accumulatedTime += dt;
@@ -157,9 +159,9 @@ CollisionInfo PhysicsScene::plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj
 		if (intersection > 0)
 		{
 			result.collNormal = collisionNormal;
-			sphere2->setPosition(sphere2->getPosition() - normalize(sphere2->getVelocity()) * intersection);
 			result.bCollision = true;			
 
+			Restitution(-intersection, collisionNormal, sphere2);
 			plane1->resolveCollision(sphere2, result.collNormal);
 
 			return result;
@@ -200,14 +202,13 @@ CollisionInfo PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 			result.collNormal = collisionNormal;
 			result.bCollision = true;
 
-			float test;
+			float pen;
 			if (bLBRTCollision)
-				test = min(abs(fLBVerticeToPlane), abs(fRTVerticeToPlane));
+				pen = min(abs(fLBVerticeToPlane), abs(fRTVerticeToPlane));
 			else
-				test = min(abs(fLTVerticeToPlane), abs(fRBVerticeToPlane));
+				pen = min(abs(fLTVerticeToPlane), abs(fRBVerticeToPlane));
 
-			box2->setPosition(box2->getPosition() - normalize(box2->getVelocity()) * test);
-
+			Restitution(-pen, collisionNormal, box2);
 			plane1->resolveCollision(box2, result.collNormal);
 
 			//TEST
@@ -217,6 +218,11 @@ CollisionInfo PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		}
 	}
 	return result;
+}
+
+CollisionInfo PhysicsScene::plane2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return CollisionInfo();
 }
 
 CollisionInfo PhysicsScene::sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
@@ -253,33 +259,9 @@ CollisionInfo PhysicsScene::sphere2Sphere(PhysicsObject* obj1, PhysicsObject* ob
 			result.collNormal = normalize(sphere1->getPosition() - sphere2->getPosition());
 			result.bCollision = true;
 
-			float distance = seperation - fRadiusSum;
-
-			float sphere1Energy = length(sphere1->getVelocity() * sphere1->getMass());
-			float sphere2Energy = length(sphere2->getVelocity() * sphere2->getMass());
-
-			float ratio = sphere1Energy / (sphere1Energy + sphere2Energy);
-
-			auto restitute = sphere1;
-			vec2 offset = normalize(restitute->getVelocity()) * distance * ratio;
-			restitute->setPosition(restitute->getPosition() + offset);
-
-			restitute = sphere2;
-			offset = normalize(restitute->getVelocity()) * distance * (1 - ratio);
-			restitute->setPosition(restitute->getPosition() + offset);
-
-
-
-			float debug = length(offset);
-			if (debug > 1.0f)
-			{
-				debug = offset.x;
-			}
-			else
-			{
-				debug = offset.y;
-			}				
-
+			float pen = seperation - fRadiusSum;
+									
+			Restitution(pen, result.collNormal, sphere1, sphere2);
 			sphere1->resolveCollision(sphere2, result.collNormal);
 
 			return result;
@@ -308,31 +290,19 @@ CollisionInfo PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		v2Clamp -= spherePos;		
 		if (length(v2Clamp) <= sphere1->getRadius())
 		{
-
-			float distance = length(v2Clamp) - sphere1->getRadius();
-
-			float sphere1Energy = length(sphere1->getVelocity() * sphere1->getMass());
-			float box2Energy = length(box2->getVelocity() * box2->getMass());
-
-			float ratio;
-			if (abs(sphere1Energy) > 0)
-				ratio = sphere1Energy / (sphere1Energy + box2Energy);
-			else
-				ratio = 0;
-
-			Rigidbody* restitute = (Rigidbody*)sphere1;
-			vec2 offset = normalize(restitute->getVelocity()) * distance * ratio;
-			if (abs(offset.x) == INFINITY)
-
-			restitute->setPosition(restitute->getPosition() + offset);
+			float pen = length(v2Clamp) - sphere1->getRadius();
 			
-			restitute = (Rigidbody*)box2;
-			offset = normalize(restitute->getVelocity()) * distance * (1.0f - ratio);
-			restitute->setPosition(restitute->getPosition() + offset);
+			if (v2Clamp == vec2(0, 0))
+				result.collNormal = normalize(spherePos - box2->getPosition());
+			else
+				result.collNormal = normalize(v2Clamp);
 
-			result.collNormal = normalize(v2Clamp);
 			result.bCollision = true;
 
+			if (pen != pen)
+				printf("FUCK");
+
+			Restitution(pen, result.collNormal, sphere1, box2);
 			sphere1->resolveCollision(box2, result.collNormal);
 
 			//TEST
@@ -342,6 +312,11 @@ CollisionInfo PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		}
 	}
 	return result;
+}
+
+CollisionInfo PhysicsScene::sphere2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return CollisionInfo();
 }
 
 CollisionInfo PhysicsScene::box2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
@@ -414,7 +389,7 @@ CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		for (int i = 0; i < 4; i++)
 		{
 			// box does not intersect face. So boxes don't intersect at all.
-			if (distances[i] < 0.0f)
+			if (distances[i] < 0.0f || distances[i] != distances[i])
 				return result;
 
 			// face of least intersection depth. That's our candidate.
@@ -425,26 +400,10 @@ CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 			}
 		}
 
-		float box1Energy = length(box1->getVelocity() * box1->getMass());
-		float box2Energy = length(box2->getVelocity() * box2->getMass());
-
-		float ratio;
-		if (abs(box1Energy) > 0)
-			ratio = box1Energy / (box1Energy + box2Energy);
-		else
-			ratio = 0;
-
-		Rigidbody* restitute = (Rigidbody*)box1;
-		vec2 offset = normalize(restitute->getVelocity()) * pen * ratio;
-		restitute->setPosition(restitute->getPosition() + offset);
-
-		restitute = (Rigidbody*)box2;
-		offset = normalize(restitute->getVelocity()) * pen * (1.0f - ratio);
-		restitute->setPosition(restitute->getPosition() + offset);
-
 		result.collNormal = collisionNormal;
 		result.bCollision = true;
-			   
+   
+		Restitution(pen, collisionNormal, box1, box2);
 		box1->resolveCollision(box2, result.collNormal);
 
 		//TEST
@@ -456,6 +415,79 @@ CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 	return result;
 }
 
+CollisionInfo PhysicsScene::box2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return CollisionInfo();
+}
+
+void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, RigidBody * rb1, RigidBody * rb2)
+{
+	overlap = abs(overlap);
+	if (overlap < 0.01f || overlap != overlap)
+		return;
+
+	bool debug = false;
+	bool rb1GoodVel = true;
+	bool rb2GoodVel = true;
+
+	float ratio = 1;
+
+	// check velocity is real
+	vec2 rb1Vel = rb1->getVelocity();
+	float rb1Speed = length(rb1Vel);
+	if (rb1Speed == 0 || rb1Speed != rb1Speed)
+	{
+		rb1GoodVel = false;
+		rb1Vel = collNormal;
+		rb1Speed = 0;
+	}
+	
+	// IF rb2 exists
+	if (rb2)
+	{
+		// check velocity is real
+		vec2 rb2Vel = rb2->getVelocity();
+		float rb2Speed = length(rb2Vel);
+		if (rb2Speed == 0 || rb2Speed != rb2Speed)
+		{
+			rb2GoodVel = false;
+			rb2Vel = -collNormal;
+			rb2Speed = 0;
+		}
+
+		if (rb1GoodVel + rb2GoodVel == false)
+		{
+			rb1Speed = 1, rb2Speed = 1;
+		}
+
+		// Get the real ratio
+		float rb1Mom = rb1Speed * rb1->getMass();
+		float rb2Mom = rb2Speed * rb2->getMass();
+
+		float ratio = rb1Mom / (rb1Mom + rb2Mom);
+	
+		// Restitute rb2
+		vec2 offset = normalize(rb2Vel) * overlap * (1 - ratio);
+		rb2->setPosition(rb2->getPosition() - offset);
+
+		float offsetMag = length(offset);
+		if (offsetMag > m_recordedOffset)
+			m_recordedOffset = offsetMag;
+		if (offsetMag > 0.5f)
+			debug = true;
+	}
+
+	// Restitute rb1
+	vec2 offset = normalize(rb1Vel) * overlap * ratio;
+	rb1->setPosition(rb1->getPosition() - offset);
+
+	float offsetMag = length(offset);
+	if (offsetMag > m_recordedOffset)
+		m_recordedOffset = offsetMag;
+	if (offsetMag > 0.5f)
+			debug = true;
+}
+
 void PhysicsScene::debugScene()
 {
 	if (debugCount == 0)
@@ -465,8 +497,11 @@ void PhysicsScene::debugScene()
 		for (auto pActor : m_actors) {
 			std::cout << count << " : ";
 			pActor->debug();
+			printf("\n");
 			count++;
 		}
+
+		std::cout << count << "Recorded Offset = " << m_recordedOffset;
 	}
 
 	debugCount++;
