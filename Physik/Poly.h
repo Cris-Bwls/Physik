@@ -16,6 +16,8 @@ public:
 	inline vector<vec2> GetVerts() const { return m_Vertices; }
 	inline void SetVerts(vector<vec2> const& vertices) { m_Vertices = vertices; CreateBroadColl(); };
 
+	void makeGizmo();
+
 private:
 	void CreateBroadColl();
 
