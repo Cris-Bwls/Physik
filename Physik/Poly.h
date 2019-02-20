@@ -14,16 +14,35 @@ public:
 	~Poly();
 
 	inline vector<vec2> GetVerts() const { return m_Vertices; }
-	inline void SetVerts(vector<vec2> const& vertices) { m_Vertices = vertices; CreateBroadColl(); };
+	inline void SetVerts(vector<vec2> const& vertices) { m_Vertices = vertices; CreateBroadColl(); CreateSNorms(); };
+	inline int GetVerticeCount() const { return m_Vertices.size(); };
+	inline int GetSNormCount() const { return m_SNorms.size(); };
 
+	inline Sphere* GetBroadColl() const { return m_pBroadColl; };
+
+	inline bool GetIsFilled() const { return m_bIsFilled; };
+	inline void SetIsFilled(bool const& bIsFilled) { m_bIsFilled = bIsFilled; };
+	inline void InvertIsFilled() { m_bIsFilled = !m_bIsFilled; };
+
+	void fixedUpdate(vec2 const& gravity, float timeStep);
 	void makeGizmo();
+
+	vec2 GetRotatedVert(int index) const;
+	vec2 GetRotatedSNorm(int index) const;
+
+	void Project(vec2 const& axis, float & min, float & max);
+
+	bool checkCollision(PhysicsObject* pOther) { return false; };
 
 private:
 	void CreateBroadColl();
+	void CreateSNorms();
 
+	bool m_bIsFilled;
 
 	vec4 m_Colour;
+	vector<vec2> m_SNorms;
 	vector<vec2> m_Vertices;
-	Sphere* m_pBroadColl;
+	Sphere* m_pBroadColl = nullptr;
 };
 

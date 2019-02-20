@@ -6,6 +6,7 @@
 #include "Plane.h"
 #include "Sphere.h"
 #include "Box.h"
+#include "Poly.h"
 
 #define DEBUG_FREQ 5
 
@@ -217,7 +218,28 @@ CollisionInfo PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 
 CollisionInfo PhysicsScene::plane2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
 {
-	return CollisionInfo();
+	Plane* plane1 = (Plane*)obj1;
+	Poly* poly2 = (Poly*)obj2;
+	CollisionInfo broad = plane2Sphere(plane1, poly2->GetBroadColl());
+	if (!broad.bCollision)
+		return broad;
+
+	// Perform SAT check
+	CollisionInfo sat;
+	sat.collNormal = plane1->getNormal();
+
+	float polyMax, polyMin;
+	poly2->Project(sat.collNormal, polyMin, polyMax);
+
+	float planeDistance = plane1->getDistance();
+	sat.bCollision = ProjectionOverlap(planeDistance, planeDistance, polyMin, polyMax, sat.fPenetration);
+
+	sat.fPenetration -= (polyMax - polyMin);
+
+	if (sat.bCollision)
+		poly2->InvertIsFilled();
+
+	return sat;
 }
 
 CollisionInfo PhysicsScene::sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
@@ -308,7 +330,49 @@ CollisionInfo PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 
 CollisionInfo PhysicsScene::sphere2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
 {
-	return CollisionInfo();
+	Sphere* sphere1 = (Sphere*)obj1;
+	Poly* poly2 = (Poly*)obj2;
+	CollisionInfo broad = sphere2Sphere(sphere1, poly2->GetBroadColl());
+	if (!broad.bCollision)
+		return broad;
+
+	// Perform SAT check
+	CollisionInfo sat;
+	sat.fPenetration = FLT_MAX;
+
+	float sphereDot, sphereMax, sphereMin;
+	float polyMax, polyMin;
+	float overlap;
+
+	for (int i = 0; i < poly2->GetSNormCount(); ++i)
+	{
+		vec2 norm = poly2->GetRotatedSNorm(i);
+
+		sphereDot = dot(norm, sphere1->getPosition());
+		sphereMax = sphereDot + sphere1->getRadius();
+		sphereMin = sphereDot - sphere1->getRadius();
+
+		poly2->Project(norm, polyMin, polyMax);
+
+		sat.bCollision = ProjectionOverlap(sphereMin, sphereMax, polyMin, polyMax, overlap);
+
+		//No collision EARLY EXIT
+		if (!(sat.bCollision))
+			return sat;
+
+		overlap -= (polyMax - polyMin);
+		overlap -= (sphereMax - sphereMin);
+
+		overlap = abs(overlap);
+
+		if (sat.fPenetration > overlap)
+		{
+			sat.fPenetration = overlap;
+			sat.collNormal = norm;
+		}
+	}
+
+	return sat;
 }
 
 CollisionInfo PhysicsScene::box2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
@@ -407,7 +471,101 @@ CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 
 CollisionInfo PhysicsScene::box2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
 {
-	return CollisionInfo();
+	Box* box1 = (Box*)obj1;
+	Poly* poly2 = (Poly*)obj2;
+	CollisionInfo broad = box2Sphere(box1, poly2->GetBroadColl());
+	if (!broad.bCollision)
+		return broad;
+
+	// Perform SAT check
+	CollisionInfo sat;
+	sat.fPenetration = FLT_MAX;
+
+	float boxMax, boxMin;
+	float polyMax, polyMin;
+	float overlap;
+
+	static const vec2 boxNorms[2] = { vec2(0,1), vec2(1,0) };
+	for (int i = 1; i < 2; ++i)
+	{
+		vec2 norm = boxNorms[i];
+
+		boxMin = dot(norm, box1->getPosition() - box1->getExtents());
+		boxMax = dot(norm, box1->getPosition() - box1->getExtents());
+
+		//boxMax = boxMin;
+		//{
+		//	float temp = dot(axis, GetRotatedVert(i) + m_position);
+		//	if (temp < min)
+		//	{
+		//		min = temp;
+		//	}
+		//	else if (temp > max)
+		//	{
+		//		max = temp;
+		//	}
+		//}
+
+		poly2->Project(norm, polyMin, polyMax);
+
+		sat.bCollision = ProjectionOverlap(boxMin, boxMax, polyMin, polyMax, overlap);
+
+		//No collision EARLY EXIT
+		if (!(sat.bCollision))
+			return sat;
+
+		overlap -= (polyMax - polyMin);
+		overlap -= (boxMax - boxMin);
+
+		overlap = abs(overlap);
+
+		if (sat.fPenetration > overlap)
+		{
+			sat.fPenetration = overlap;
+			sat.collNormal = norm;
+		}
+	}
+
+	for (int i = 0; i < poly2->GetSNormCount(); ++i)
+	{
+		vec2 norm = poly2->GetRotatedSNorm(i);
+
+		boxMin = dot(norm, box1->getPosition() - box1->getExtents());
+		boxMax = dot(norm, box1->getPosition() - box1->getExtents());
+
+		//boxMax = boxMin;
+		//{
+		//	float temp = dot(axis, GetRotatedVert(i) + m_position);
+		//	if (temp < min)
+		//	{
+		//		min = temp;
+		//	}
+		//	else if (temp > max)
+		//	{
+		//		max = temp;
+		//	}
+		//}
+
+		poly2->Project(norm, polyMin, polyMax);
+
+		sat.bCollision = ProjectionOverlap(boxMin, boxMax, polyMin, polyMax, overlap);
+
+		//No collision EARLY EXIT
+		if (!(sat.bCollision))
+			return sat;
+
+		overlap -= (polyMax - polyMin);
+		overlap -= (boxMax - boxMin);
+
+		overlap = abs(overlap);
+
+		if (sat.fPenetration > overlap)
+		{
+			sat.fPenetration = overlap;
+			sat.collNormal = norm;
+		}
+	}
+	return sat;
 }
 
 void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, RigidBody * rb1, RigidBody * rb2)
@@ -497,4 +655,17 @@ void PhysicsScene::debugScene()
 	debugCount++;
 	if (debugCount > DEBUG_FREQ)
 		debugCount = 0;
+}
+
+bool PhysicsScene::ProjectionOverlap(float const & min1, float const & max1, float const & min2, float const & max2, float & overlap)
+{
+	if (max1 <= min2)	return false;
+	if (max2 <= min1)	return false;
+
+	// Overlap
+	float fMin = min(min1, min2);
+	float fMax = max(max1, max2);
+
+	overlap = fMax - fMin;
+	return true;
 }

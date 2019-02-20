@@ -14,7 +14,7 @@ class RigidBody;
 
 struct CollisionInfo
 {
-	bool bCollision;
+	bool bCollision = false;
 	glm::vec2 collNormal;
 	float fPenetration;
 };
@@ -53,6 +53,8 @@ public:
 
 	void debugScene();
 protected:
+	static bool ProjectionOverlap(float const& min1, float const& max1, float const& min2, float const& max2, float & overlap);
+
 	glm::vec2 m_gravity;
 	float m_timeStep;
 	vector<PhysicsObject*> m_actors;

@@ -7,6 +7,7 @@
 #include "Plane.h"
 #include "Sphere.h"
 #include "Box.h"
+#include "Poly.h"
 
 using namespace glm;
 
@@ -81,6 +82,10 @@ bool PhysikApp::startup() {
 	//	//box->applyForce(circularRand(15.0f));
 	//	//m_pPhysicsScene->AddActor(box);
 	//}
+
+	vector<vec2> poly1Verts = { vec2(-15, 0), vec2(-5, 10), vec2(5, 10), vec2(15, 0), vec2(5, -10), vec2(-5, -10) };
+	Poly* poly1 = new Poly(poly1Verts, { 30,30 }, { 0,10 }, 0.0f, 1, 1, vec4(1, 0, 0, 1));
+	m_pPhysicsScene->AddActor(poly1);
 
 	return true;
 }
