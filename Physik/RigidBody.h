@@ -22,6 +22,9 @@ public:
 	inline float getMass() const { return m_mass; }
 	inline float getElasticity() const { return m_elasticity; };
 
+	inline bool GetIsFilled() const { return m_bIsFilled; };
+	inline void SetIsFilled(bool const& bIsFilled) { m_bIsFilled = bIsFilled; };
+	inline void InvertIsFilled() { m_bIsFilled = !m_bIsFilled; };
 	
 	void resolveCollision(RigidBody* actor2, glm::vec2 const& normal);
 protected:
@@ -33,5 +36,7 @@ protected:
 	float m_mass;
 	float m_rotation; //2D so we only need a single float to represent our rotation
 	float m_elasticity;
+
+	bool m_bIsFilled;
 };
 

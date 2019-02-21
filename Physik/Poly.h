@@ -20,10 +20,6 @@ public:
 
 	inline Sphere* GetBroadColl() const { return m_pBroadColl; };
 
-	inline bool GetIsFilled() const { return m_bIsFilled; };
-	inline void SetIsFilled(bool const& bIsFilled) { m_bIsFilled = bIsFilled; };
-	inline void InvertIsFilled() { m_bIsFilled = !m_bIsFilled; };
-
 	void fixedUpdate(vec2 const& gravity, float timeStep);
 	void makeGizmo();
 
@@ -37,8 +33,6 @@ public:
 private:
 	void CreateBroadColl();
 	void CreateSNorms();
-
-	bool m_bIsFilled;
 
 	vec4 m_Colour;
 	vector<vec2> m_SNorms;

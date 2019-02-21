@@ -8,6 +8,7 @@ using std::vector;
 
 
 	static float m_recordedOffset;
+	static int debugCount = 0;
 
 class PhysicsObject;
 class RigidBody;
@@ -48,6 +49,10 @@ public:
 	static CollisionInfo box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo box2Box(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo box2Poly(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo poly2Plane(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo poly2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo poly2Box(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo poly2Poly(PhysicsObject* obj1, PhysicsObject* obj2);
 
 	static void Restitution(float overlap, glm::vec2 const& collNormal, RigidBody* rb1, RigidBody* rb2 = nullptr);
 
@@ -59,5 +64,5 @@ protected:
 	float m_timeStep;
 	vector<PhysicsObject*> m_actors;
 
-	int debugCount = 0;	
+	//int debugCount = 0;	
 };

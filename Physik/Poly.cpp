@@ -72,9 +72,13 @@ vec2 Poly::GetRotatedVert(int index) const
 	if (index >= m_Vertices.size())
 		assert(!"m_Vertices index OUT OF BOUNDS");
 
-	vec2 result = m_Vertices[index];
-	//result.x *= -sinf(m_rotation);
-	//result.y *= cosf(m_rotation);
+	mat2 rotMat;
+	rotMat[0][0] = cosf(m_rotation);
+	rotMat[0][1] = sinf(m_rotation);
+	rotMat[1][0] = -sinf(m_rotation);
+	rotMat[1][1] = cosf(m_rotation);
+
+	vec2 result = rotMat * m_Vertices[index];
 
 	return result;
 }
@@ -84,9 +88,13 @@ vec2 Poly::GetRotatedSNorm(int index) const
 	if (index >= m_SNorms.size())
 		assert(!"m_SNorms index OUT OF BOUNDS");
 
-	vec2 result = m_SNorms[index];
-	//result.x *= cosf(m_rotation);
-	//result.y *= sinf(m_rotation);
+	mat2 rotMat;
+	rotMat[0][0] = cosf(m_rotation);
+	rotMat[0][1] = sinf(m_rotation);
+	rotMat[1][0] = -sinf(m_rotation);
+	rotMat[1][1] = cosf(m_rotation);
+
+	vec2 result = rotMat * m_SNorms[index];
 
 	return result;
 }
@@ -128,7 +136,7 @@ void Poly::CreateBroadColl()
 	colour -= m_Colour;
 	colour.a = 0.5f;
 
-	m_pBroadColl = new Sphere(m_position, m_velocity, m_mass, m_elasticity, radius, colour);
+	m_pBroadColl = new Sphere(m_position, { 0,0 }, m_mass, m_elasticity, radius, colour);
 }
 
 void Poly::CreateSNorms()

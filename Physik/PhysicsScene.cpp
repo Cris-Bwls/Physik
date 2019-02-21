@@ -7,6 +7,7 @@
 #include "Sphere.h"
 #include "Box.h"
 #include "Poly.h"
+#include "time.h"
 
 #define DEBUG_FREQ 5
 
@@ -16,7 +17,8 @@ static CollisionTest collisionFuncs[(int)ShapeID::TOTAL][(int)ShapeID::TOTAL] =
 { 
 {PhysicsScene::plane2Plane, PhysicsScene::plane2Sphere, PhysicsScene::plane2Box, PhysicsScene::plane2Poly},
 {PhysicsScene::sphere2Plane, PhysicsScene::sphere2Sphere, PhysicsScene::sphere2Box, PhysicsScene::sphere2Poly},
-{PhysicsScene::box2Plane, PhysicsScene::box2Sphere, PhysicsScene::box2Box, PhysicsScene::box2Poly}
+{PhysicsScene::box2Plane, PhysicsScene::box2Sphere, PhysicsScene::box2Box, PhysicsScene::box2Poly},
+{PhysicsScene::poly2Plane, PhysicsScene::poly2Sphere, PhysicsScene::poly2Box, PhysicsScene::poly2Poly}
 };
 
 PhysicsScene::PhysicsScene()
@@ -112,17 +114,25 @@ void PhysicsScene::checkForCollision()
 					{
 						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object2);
 						((Plane*)object1)->resolveCollision((RigidBody*)object2, info.collNormal);
+						((RigidBody*)object2)->InvertIsFilled();
 					}
 					else if (shapeID2 == (int)ShapeID::Plane)
 					{
 						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object1);
 						((Plane*)object2)->resolveCollision((RigidBody*)object2, info.collNormal);
+						((RigidBody*)object1)->InvertIsFilled();
 					}
 					else
 					{
 						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object1, (RigidBody*)object2);
 						((RigidBody*)object1)->resolveCollision((RigidBody*)object2, info.collNormal);
+						((RigidBody*)object1)->InvertIsFilled();
+						((RigidBody*)object2)->InvertIsFilled();
 					}
+					bool debug;
+					if (info.collNormal.x != info.collNormal.x)
+						debug = true;
+
 				}
 			}
 		}
@@ -206,10 +216,7 @@ CollisionInfo PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 			result.collNormal = collisionNormal;
 			result.bCollision = true;
 			result.fPenetration = pen;
-
-			//TEST
-			box2->SetIsFilled(!box2->GetIsFilled());
-
+			
 			return result;
 		}
 	}
@@ -235,10 +242,7 @@ CollisionInfo PhysicsScene::plane2Poly(PhysicsObject * obj1, PhysicsObject * obj
 	sat.bCollision = ProjectionOverlap(planeDistance, planeDistance, polyMin, polyMax, sat.fPenetration);
 
 	sat.fPenetration -= (polyMax - polyMin);
-
-	if (sat.bCollision)
-		poly2->InvertIsFilled();
-
+	
 	return sat;
 }
 
@@ -318,10 +322,7 @@ CollisionInfo PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 
 			if (pen != pen)
 				printf("FUCK");
-
-			//TEST
-			box2->SetIsFilled(!box2->GetIsFilled());
-
+			
 			return result;
 		}
 	}
@@ -459,11 +460,7 @@ CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		result.collNormal = collisionNormal;
 		result.bCollision = true;
 		result.fPenetration = pen;
-
-		//TEST
-		box1->SetIsFilled(!box1->GetIsFilled());
-		box2->SetIsFilled(!box2->GetIsFilled());
-
+		
 		return result;
 	}
 	return result;
@@ -485,26 +482,36 @@ CollisionInfo PhysicsScene::box2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
 	float polyMax, polyMin;
 	float overlap;
 
+	vec2 boxPos = box1->getPosition();
+	vec2 boxExtent = box1->getExtents();
+
+	vec2 boxVerts[4] =
+	{
+		boxPos + boxExtent,
+		boxPos + vec2(boxExtent.x, -boxExtent.y),
+		boxPos + -boxExtent,
+		boxPos + vec2(-boxExtent.x, boxExtent.y)
+	};
+
 	static const vec2 boxNorms[2] = { vec2(0,1), vec2(1,0) };
 	for (int i = 1; i < 2; ++i)
 	{
 		vec2 norm = boxNorms[i];
 
-		boxMin = dot(norm, box1->getPosition() - box1->getExtents());
-		boxMax = dot(norm, box1->getPosition() - box1->getExtents());
-
-		//boxMax = boxMin;
-		//{
-		//	float temp = dot(axis, GetRotatedVert(i) + m_position);
-		//	if (temp < min)
-		//	{
-		//		min = temp;
-		//	}
-		//	else if (temp > max)
-		//	{
-		//		max = temp;
-		//	}
-		//}
+		boxMin = dot(norm, boxVerts[2]);
+		boxMax = boxMin;
+		for (int i = 0; i < 4; ++i)
+		{
+			float temp = dot(norm, boxVerts[i]);
+			if (temp < boxMin)
+			{
+				boxMin = temp;
+			}
+			else if (temp > boxMax)
+			{
+				boxMax = temp;
+			}
+		}
 
 		poly2->Project(norm, polyMin, polyMax);
 
@@ -530,21 +537,20 @@ CollisionInfo PhysicsScene::box2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
 	{
 		vec2 norm = poly2->GetRotatedSNorm(i);
 
-		boxMin = dot(norm, box1->getPosition() - box1->getExtents());
-		boxMax = dot(norm, box1->getPosition() - box1->getExtents());
-
-		//boxMax = boxMin;
-		//{
-		//	float temp = dot(axis, GetRotatedVert(i) + m_position);
-		//	if (temp < min)
-		//	{
-		//		min = temp;
-		//	}
-		//	else if (temp > max)
-		//	{
-		//		max = temp;
-		//	}
-		//}
+		boxMin = dot(norm, boxVerts[2]);
+		boxMax = boxMin;
+		for (int i = 0; i < 4; ++i)
+		{
+			float temp = dot(norm, boxVerts[i]);
+			if (temp < boxMin)
+			{
+				boxMin = temp;
+			}
+			else if (temp > boxMax)
+			{
+				boxMax = temp;
+			}
+		}
 
 		poly2->Project(norm, polyMin, polyMax);
 
@@ -559,6 +565,89 @@ CollisionInfo PhysicsScene::box2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
 
 		overlap = abs(overlap);
 
+		if (sat.fPenetration > overlap)
+		{
+			sat.fPenetration = overlap;
+			sat.collNormal = norm;
+		}
+	}
+	return sat;
+}
+
+CollisionInfo PhysicsScene::poly2Plane(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return plane2Poly(obj2, obj1);
+}
+
+CollisionInfo PhysicsScene::poly2Sphere(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return sphere2Poly(obj2, obj1);
+}
+
+CollisionInfo PhysicsScene::poly2Box(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return box2Poly(obj2, obj1);
+}
+
+CollisionInfo PhysicsScene::poly2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	Poly* poly1 = (Poly*)obj1;
+	Poly* poly2 = (Poly*)obj2;
+	CollisionInfo broad = sphere2Sphere(poly1->GetBroadColl(), poly2->GetBroadColl());
+	if (!broad.bCollision)
+		return broad;
+
+	// Perform SAT check
+	CollisionInfo sat;
+	sat.fPenetration = FLT_MAX;
+	
+	float poly1Max, poly1Min;
+	float poly2Max, poly2Min;
+	float overlap;
+	
+	for (int i = 0; i < poly1->GetSNormCount(); ++i)
+	{
+		vec2 norm = poly1->GetRotatedSNorm(i);		
+	
+		poly1->Project(norm, poly1Min, poly1Max);
+		poly2->Project(norm, poly2Min, poly2Max);
+	
+		sat.bCollision = ProjectionOverlap(poly1Min, poly1Max, poly2Min, poly2Max, overlap);
+	
+		//No collision EARLY EXIT
+		if (!(sat.bCollision))
+			return sat;
+	
+		overlap -= (poly1Max - poly1Min);
+		overlap -= (poly2Max - poly2Min);
+	
+		overlap = abs(overlap);
+	
+		if (sat.fPenetration > overlap)
+		{
+			sat.fPenetration = overlap;
+			sat.collNormal = norm;
+		}
+	}
+	
+	for (int i = 0; i < poly2->GetSNormCount(); ++i)
+	{
+		vec2 norm = poly2->GetRotatedSNorm(i);
+	
+		poly1->Project(norm, poly1Min, poly1Max);
+		poly2->Project(norm, poly2Min, poly2Max);
+	
+		sat.bCollision = ProjectionOverlap(poly1Min, poly1Max, poly2Min, poly2Max, overlap);
+	
+		//No collision EARLY EXIT
+		if (!(sat.bCollision))
+			return sat;
+	
+		overlap -= (poly1Max - poly1Min);
+		overlap -= (poly2Max - poly2Min);
+	
+		overlap = abs(overlap);
+	
 		if (sat.fPenetration > overlap)
 		{
 			sat.fPenetration = overlap;
@@ -589,6 +678,9 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 		rb1Vel = collNormal;
 		rb1Speed = 0;
 	}
+
+	vec2 rb1Offset = { 0,0 };
+	vec2 rb2Offset = { 0,0 };
 	
 	// IF rb2 exists
 	if (rb2)
@@ -615,10 +707,10 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 		float ratio = rb1Mom / (rb1Mom + rb2Mom);
 	
 		// Restitute rb2
-		vec2 offset = normalize(rb2Vel) * overlap * (1 - ratio);
-		rb2->setPosition(rb2->getPosition() - offset);
+		rb2Offset = normalize(rb2Vel) * overlap * (1 - ratio);
+		rb2->setPosition(rb2->getPosition() - rb2Offset);
 
-		float offsetMag = length(offset);
+		float offsetMag = length(rb2Offset);
 		if (offsetMag > m_recordedOffset)
 			m_recordedOffset = offsetMag;
 		if (offsetMag > 0.5f)
@@ -626,14 +718,25 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 	}
 
 	// Restitute rb1
-	vec2 offset = normalize(rb1Vel) * overlap * ratio;
-	rb1->setPosition(rb1->getPosition() - offset);
+	rb1Offset = normalize(rb1Vel) * overlap * ratio;
+	rb1->setPosition(rb1->getPosition() - rb1Offset);
 
-	float offsetMag = length(offset);
+	float offsetMag = length(rb1Offset);
 	if (offsetMag > m_recordedOffset)
 		m_recordedOffset = offsetMag;
 	if (offsetMag > 0.5f)
 			debug = true;
+
+	float fDot = dot(normalize(rb1Offset), normalize(rb2Offset));
+	if (fDot > 0.0f)
+	{
+		printf("BAD STUFF \n");
+		printf("obj1 : %i : POS x %f, y %f : OFS x %f, y%f \n", rb1->getShapeID(), rb1->getPosition().x, rb1->getPosition().y, rb1Offset.x, rb1Offset.y);
+		printf("obj2 : %i : POS x %f, y %f : OFS x %f, y%f \n", rb2->getShapeID(), rb2->getPosition().x, rb2->getPosition().y, rb2Offset.x, rb2Offset.y);
+		printf("dot %f \n", fDot);
+		printf("debug %i \n", debug);
+		printf("\n");
+	}
 }
 
 void PhysicsScene::debugScene()

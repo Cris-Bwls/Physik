@@ -16,12 +16,8 @@ public:
 	inline glm::vec2 getExtents() { return m_Extents; };
 	inline glm::vec4 getColour() { return m_Colour; };
 
-	inline bool GetIsFilled() { return m_bIsFilled; };
-	inline void SetIsFilled(bool bIsFilled) { m_bIsFilled = bIsFilled; };
-
 protected:
 	glm::vec2 m_Extents;
 	glm::vec4 m_Colour;
-	bool m_bIsFilled;
 };
 

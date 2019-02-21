@@ -64,7 +64,7 @@ bool PhysikApp::startup() {
 	m_pPhysicsScene->AddActor(box4);
 	m_pPhysicsScene->AddActor(box5);
 	m_pPhysicsScene->AddActor(box6);
-
+	
 	Sphere* ball1 = new Sphere(vec2(-20, 0), vec2(0, 0), 4.0f, 1.0f, 4, vec4(1, 0, 0, 1));
 	Sphere* ball2 = new Sphere(vec2(0, -20), vec2(0, 0), 4.0f, 1.0f, 4, vec4(0, 1, 0, 1));
 	
@@ -86,6 +86,10 @@ bool PhysikApp::startup() {
 	vector<vec2> poly1Verts = { vec2(-15, 0), vec2(-5, 10), vec2(5, 10), vec2(15, 0), vec2(5, -10), vec2(-5, -10) };
 	Poly* poly1 = new Poly(poly1Verts, { 30,30 }, { 0,10 }, 0.0f, 1, 1, vec4(1, 0, 0, 1));
 	m_pPhysicsScene->AddActor(poly1);
+
+	vector<vec2> poly2Verts = { vec2(-15, 0), vec2(-5, 10), vec2(5, 10), vec2(15, 0), vec2(5, -10), vec2(-5, -10) };
+	Poly* poly2 = new Poly(poly1Verts, { 0,0 }, { 10,15 }, 1.0f, 1, 1, vec4(1, 0, 0, 1));
+	m_pPhysicsScene->AddActor(poly2);
 
 	return true;
 }
