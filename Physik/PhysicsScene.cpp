@@ -7,7 +7,6 @@
 #include "Sphere.h"
 #include "Box.h"
 #include "Poly.h"
-#include "time.h"
 
 #define DEBUG_FREQ 5
 
@@ -25,8 +24,6 @@ PhysicsScene::PhysicsScene()
 {
 	m_timeStep = 0.01f;
 	m_gravity = { 0,0 };
-
-	m_recordedOffset = 0;
 }
 
 
@@ -64,10 +61,9 @@ void PhysicsScene::Update(float dt)
 	static float accumulatedTime = 0.0f;
 	accumulatedTime += dt;
 
-	static std::list<PhysicsObject*> dirty;
-
 	while (accumulatedTime >= m_timeStep)
 	{
+		time += m_timeStep;
 		for each (PhysicsObject* actor in m_actors)
 		{
 			actor->fixedUpdate(m_gravity, m_timeStep);
@@ -670,6 +666,7 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 	float ratio = 1;
 
 	// check velocity is real
+	vec2 rb1Pos = rb1->getPosition();
 	vec2 rb1Vel = rb1->getVelocity();
 	float rb1Speed = length(rb1Vel);
 	if (rb1Speed == 0 || rb1Speed != rb1Speed)
@@ -678,6 +675,7 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 		rb1Vel = collNormal;
 		rb1Speed = 0;
 	}
+	vec2 rb1UnitVel = normalize(rb1Vel);
 
 	vec2 rb1Offset = { 0,0 };
 	vec2 rb2Offset = { 0,0 };
@@ -686,6 +684,7 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 	if (rb2)
 	{
 		// check velocity is real
+		vec2 rb2Pos = rb2->getPosition();
 		vec2 rb2Vel = rb2->getVelocity();
 		float rb2Speed = length(rb2Vel);
 		if (rb2Speed == 0 || rb2Speed != rb2Speed)
@@ -694,6 +693,7 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 			rb2Vel = -collNormal;
 			rb2Speed = 0;
 		}
+		vec2 rb2UnitVel = normalize(rb2Vel);
 
 		if (rb1GoodVel + rb2GoodVel == false)
 		{
@@ -705,36 +705,34 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 		float rb2Mom = rb2Speed * rb2->getMass();
 
 		float ratio = rb1Mom / (rb1Mom + rb2Mom);
+
+		float fDot = dot(rb1UnitVel, rb2UnitVel);
+		if (fDot > 0.8f || overlap > 2.0f)
+		{
+			float fSep = dot(rb1UnitVel, rb1Pos) - dot(rb1UnitVel, rb2Pos);
+			if (fSep > 0)
+				ratio = 1.0f;
+			else
+				ratio = 0.0f;
+		}
 	
 		// Restitute rb2
-		rb2Offset = normalize(rb2Vel) * overlap * (1 - ratio);
-		rb2->setPosition(rb2->getPosition() - rb2Offset);
-
-		float offsetMag = length(rb2Offset);
-		if (offsetMag > m_recordedOffset)
-			m_recordedOffset = offsetMag;
-		if (offsetMag > 0.5f)
-			debug = true;
+		rb2Offset = rb2UnitVel * overlap * (1 - ratio);
+		rb2->setPosition(rb2Pos - rb2Offset);
 	}
 
 	// Restitute rb1
-	rb1Offset = normalize(rb1Vel) * overlap * ratio;
-	rb1->setPosition(rb1->getPosition() - rb1Offset);
+	rb1Offset = rb1UnitVel * overlap * ratio;
+	rb1->setPosition(rb1Pos - rb1Offset);
 
-	float offsetMag = length(rb1Offset);
-	if (offsetMag > m_recordedOffset)
-		m_recordedOffset = offsetMag;
-	if (offsetMag > 0.5f)
-			debug = true;
-
-	float fDot = dot(normalize(rb1Offset), normalize(rb2Offset));
-	if (fDot > 0.0f)
+	if (overlap > 2.0f)
 	{
-		printf("BAD STUFF \n");
+		printf("BAD STUFF @ %f \n", time);
 		printf("obj1 : %i : POS x %f, y %f : OFS x %f, y%f \n", rb1->getShapeID(), rb1->getPosition().x, rb1->getPosition().y, rb1Offset.x, rb1Offset.y);
-		printf("obj2 : %i : POS x %f, y %f : OFS x %f, y%f \n", rb2->getShapeID(), rb2->getPosition().x, rb2->getPosition().y, rb2Offset.x, rb2Offset.y);
-		printf("dot %f \n", fDot);
-		printf("debug %i \n", debug);
+		if (rb2)
+			printf("obj2 : %i : POS x %f, y %f : OFS x %f, y%f \n", rb2->getShapeID(), rb2->getPosition().x, rb2->getPosition().y, rb2Offset.x, rb2Offset.y);
+		printf("ratio %f \n", ratio);
+		printf("overlap %f \n", overlap);
 		printf("\n");
 	}
 }
@@ -751,8 +749,6 @@ void PhysicsScene::debugScene()
 			printf("\n");
 			count++;
 		}
-
-		std::cout << count << "Recorded Offset = " << m_recordedOffset;
 	}
 
 	debugCount++;

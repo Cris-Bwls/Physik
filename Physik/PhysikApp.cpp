@@ -52,44 +52,50 @@ bool PhysikApp::startup() {
 	m_pPhysicsScene->AddActor(plane3);
 	m_pPhysicsScene->AddActor(plane4);
 
-	Box* box1 = new Box({ 5,5 }, { 20, 20 }, { 10,0 }, 1, 1.0f, { 0,0,1,1 }, true);
-	Box* box2 = new Box({ 5,5 }, { 0, 0 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
-	Box* box3 = new Box({ 5,5 }, { 40, 0 }, { 10,0 }, 1, 1.0f, { 0,0,1,1 }, true);
-	Box* box4 = new Box({ 5,5 }, { 0, 30 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
-	Box* box5 = new Box({ 5,5 }, { 60, 10 }, { 10,0 }, 1, 1.0f, { 0,0,1,1 }, true);
-	Box* box6 = new Box({ 5,5 }, {-40, 15 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
+	Box* box1 = new Box({ 5,5 }, { 20, 40 }, { 5,10 }, 1, 1.0f, { 0,0,1,1 }, true);
+	Box* box2 = new Box({ 5,5 }, { 20, 30 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
+
 	m_pPhysicsScene->AddActor(box1);
 	m_pPhysicsScene->AddActor(box2);
-	m_pPhysicsScene->AddActor(box3);
-	m_pPhysicsScene->AddActor(box4);
-	m_pPhysicsScene->AddActor(box5);
-	m_pPhysicsScene->AddActor(box6);
-	
-	Sphere* ball1 = new Sphere(vec2(-20, 0), vec2(0, 0), 4.0f, 1.0f, 4, vec4(1, 0, 0, 1));
-	Sphere* ball2 = new Sphere(vec2(0, -20), vec2(0, 0), 4.0f, 1.0f, 4, vec4(0, 1, 0, 1));
-	
-	m_pPhysicsScene->AddActor(ball1);
-	m_pPhysicsScene->AddActor(ball2);
-	ball1->applyForce(vec2(15, 0));
-	ball2->applyForce(vec2(0, 10));
-	
-	//for (int i = 0; i < 10; ++i)
-	//{
-	//	Sphere* ball = new Sphere(10.0f * circularRand(5.0f), circularRand(10.0f), 3.0f, 1.0f, 4, vec4(linearRand(0.0f, 1.0f), linearRand(0.0f, 1.0f), linearRand(0.0f, 1.0f), 1));
-	//	m_pPhysicsScene->AddActor(ball);
+
+	//Box* box1 = new Box({ 5,5 }, { 20, 20 }, { 10,0 }, 1, 1.0f, { 0,0,1,1 }, true);
+	//Box* box2 = new Box({ 5,5 }, { 0, 0 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
+	//Box* box3 = new Box({ 5,5 }, { 40, 0 }, { 10,0 }, 1, 1.0f, { 0,0,1,1 }, true);
+	//Box* box4 = new Box({ 5,5 }, { 0, 30 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
+	//Box* box5 = new Box({ 5,5 }, { 60, 10 }, { 10,0 }, 1, 1.0f, { 0,0,1,1 }, true);
+	//Box* box6 = new Box({ 5,5 }, {-40, 15 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
+	//m_pPhysicsScene->AddActor(box1);
+	//m_pPhysicsScene->AddActor(box2);
+	//m_pPhysicsScene->AddActor(box3);
+	//m_pPhysicsScene->AddActor(box4);
+	//m_pPhysicsScene->AddActor(box5);
+	//m_pPhysicsScene->AddActor(box6);
 	//
-	//	//Box* box = new Box({ 5,5 }, 8.0f * circularRand(5.0f), {0,0}, 1, 1.0f, vec4(linearRand(0.0f, 1.0f), linearRand(0.0f, 1.0f), linearRand(0.0f, 1.0f), 1), true);
-	//	//box->applyForce(circularRand(15.0f));
-	//	//m_pPhysicsScene->AddActor(box);
-	//}
-
-	vector<vec2> poly1Verts = { vec2(-15, 0), vec2(-5, 10), vec2(5, 10), vec2(15, 0), vec2(5, -10), vec2(-5, -10) };
-	Poly* poly1 = new Poly(poly1Verts, { 30,30 }, { 0,10 }, 0.0f, 1, 1, vec4(1, 0, 0, 1));
-	m_pPhysicsScene->AddActor(poly1);
-
-	vector<vec2> poly2Verts = { vec2(-15, 0), vec2(-5, 10), vec2(5, 10), vec2(15, 0), vec2(5, -10), vec2(-5, -10) };
-	Poly* poly2 = new Poly(poly1Verts, { 0,0 }, { 10,15 }, 1.0f, 1, 1, vec4(1, 0, 0, 1));
-	m_pPhysicsScene->AddActor(poly2);
+	//Sphere* ball1 = new Sphere(vec2(-20, 0), vec2(0, 0), 4.0f, 1.0f, 4, vec4(1, 0, 0, 1));
+	//Sphere* ball2 = new Sphere(vec2(0, -20), vec2(0, 0), 4.0f, 1.0f, 4, vec4(0, 1, 0, 1));
+	//
+	//m_pPhysicsScene->AddActor(ball1);
+	//m_pPhysicsScene->AddActor(ball2);
+	//ball1->applyForce(vec2(15, 0));
+	//ball2->applyForce(vec2(0, 10));
+	//
+	////for (int i = 0; i < 10; ++i)
+	////{
+	////	Sphere* ball = new Sphere(10.0f * circularRand(5.0f), circularRand(10.0f), 3.0f, 1.0f, 4, vec4(linearRand(0.0f, 1.0f), linearRand(0.0f, 1.0f), linearRand(0.0f, 1.0f), 1));
+	////	m_pPhysicsScene->AddActor(ball);
+	////
+	////	//Box* box = new Box({ 5,5 }, 8.0f * circularRand(5.0f), {0,0}, 1, 1.0f, vec4(linearRand(0.0f, 1.0f), linearRand(0.0f, 1.0f), linearRand(0.0f, 1.0f), 1), true);
+	////	//box->applyForce(circularRand(15.0f));
+	////	//m_pPhysicsScene->AddActor(box);
+	////}
+	//
+	//vector<vec2> poly1Verts = { vec2(-15, 0), vec2(-5, 10), vec2(5, 10), vec2(15, 0), vec2(5, -10), vec2(-5, -10) };
+	//Poly* poly1 = new Poly(poly1Verts, { 30,30 }, { 0,10 }, 0.0f, 1, 1, vec4(1, 0, 0, 1));
+	//m_pPhysicsScene->AddActor(poly1);
+	//
+	//vector<vec2> poly2Verts = { vec2(-15, 0), vec2(-5, 10), vec2(5, 10), vec2(15, 0), vec2(5, -10), vec2(-5, -10) };
+	//Poly* poly2 = new Poly(poly1Verts, { 0,0 }, { 10,15 }, 1.0f, 1, 1, vec4(1, 0, 0, 1));
+	//m_pPhysicsScene->AddActor(poly2);
 
 	return true;
 }
