@@ -2,7 +2,7 @@
 #include <Gizmos.h>
 
 #define DEBUG true
-#define SHOW_NORMALS false
+#define SHOW_NORMALS true
 
 Poly::Poly(vector<vec2> const & vertices, vec2 position, vec2 velocity, float rotation, float mass, float elasticity, glm::vec4 colour) :
 	RigidBody::RigidBody(ShapeID::Poly, position, velocity, rotation, mass, elasticity)
@@ -12,10 +12,20 @@ Poly::Poly(vector<vec2> const & vertices, vec2 position, vec2 velocity, float ro
 
 	CreateSNorms();
 	CreateBroadColl();
+
+	Transform pos = Transform();
+	pos.SetPosition(position);
+
+	Transform rot = Transform();
+	rot.SetRotate2D(rotation);
+
+	m_GlobalTransform.LocalTransform(pos.GetTransform(), rot.GetTransform(), Transform::Identity());
+
 }
 
 Poly::~Poly()
 {
+	delete m_pBroadColl;
 }
 
 void Poly::fixedUpdate(vec2 const& gravity, float timeStep)
@@ -23,6 +33,14 @@ void Poly::fixedUpdate(vec2 const& gravity, float timeStep)
 	RigidBody::fixedUpdate(gravity, timeStep);
 
 	m_pBroadColl->setPosition(m_position);
+
+	Transform pos = Transform();
+	pos.SetPosition(m_position);
+
+	Transform rot = Transform();
+	rot.SetRotate2D(m_rotation);
+
+	m_GlobalTransform.LocalTransform(pos.GetTransform(), rot.GetTransform(), Transform::Identity());
 }
 
 
@@ -61,10 +79,18 @@ void Poly::makeGizmo()
 			end = GetRotatedVert(j);
 
 			vec2 mid = ((start + end) * 0.5f) + m_position;
+			vec2 norm = GetRotatedSNorm(i);
 
-			aie::Gizmos::add2DLine(mid, m_SNorms[i] + mid, {1, 0, 0, 1});
+			aie::Gizmos::add2DLine(mid, norm + mid, {1, 0, 0, 1});
 		}
 	}
+}
+
+void Poly::Move(Transform const& parentTransform, Transform const& localTransform)
+{
+	m_GlobalTransform.GlobalTransform(parentTransform.GetTransform(), localTransform.GetTransform());
+	m_position = m_GlobalTransform.GetPosition();
+	m_pBroadColl->setPosition(m_position);
 }
 
 vec2 Poly::GetRotatedVert(int index) const
@@ -72,11 +98,13 @@ vec2 Poly::GetRotatedVert(int index) const
 	if (index >= m_Vertices.size())
 		assert(!"m_Vertices index OUT OF BOUNDS");
 
+	mat3 temp = m_GlobalTransform.GetTransform();
+
 	mat2 rotMat;
-	rotMat[0][0] = cosf(m_rotation);
-	rotMat[0][1] = sinf(m_rotation);
-	rotMat[1][0] = -sinf(m_rotation);
-	rotMat[1][1] = cosf(m_rotation);
+	rotMat[0][0] = temp[0][0];
+	rotMat[0][1] = temp[0][1];
+	rotMat[1][0] = temp[1][0];
+	rotMat[1][1] = temp[1][1];
 
 	vec2 result = rotMat * m_Vertices[index];
 
@@ -88,13 +116,15 @@ vec2 Poly::GetRotatedSNorm(int index) const
 	if (index >= m_SNorms.size())
 		assert(!"m_SNorms index OUT OF BOUNDS");
 
-	mat2 rotMat;
-	rotMat[0][0] = cosf(m_rotation);
-	rotMat[0][1] = sinf(m_rotation);
-	rotMat[1][0] = -sinf(m_rotation);
-	rotMat[1][1] = cosf(m_rotation);
+	mat3 temp = m_GlobalTransform.GetTransform();
 
-	vec2 result = rotMat * m_SNorms[index];
+	mat2 rotMat;
+	rotMat[0][0] = temp[0][0];
+	rotMat[0][1] = temp[0][1];
+	rotMat[1][0] = temp[1][0];
+	rotMat[1][1] = temp[1][1];
+
+	vec2 result = rotMat * m_SNorms[index].norm;
 
 	return result;
 }
@@ -137,6 +167,7 @@ void Poly::CreateBroadColl()
 	colour.a = 0.5f;
 
 	m_pBroadColl = new Sphere(m_position, { 0,0 }, m_mass, m_elasticity, radius, colour);
+	m_pBroadColl->HideDirLine();
 }
 
 void Poly::CreateSNorms()
@@ -151,32 +182,31 @@ void Poly::CreateSNorms()
 
 		vec2 vec = m_Vertices[i] - m_Vertices[j];
 
-		vec2 sNormal;
-		sNormal.x = vec.y;
-		sNormal.y = -vec.x;
+		vec2 norm;
+		norm.x = vec.y;
+		norm.y = -vec.x;
 
-		sNormal = normalize(sNormal);
+		norm = normalize(norm);
 
-		m_SNorms.push_back(sNormal);
+		SurfaceNorm sNorm;
+		sNorm.norm = norm;
+
+		m_SNorms.push_back(sNorm);
 	}
 
 	// Parallel check
 	for (int i = 0; i < (m_SNorms.size() - 1); ++i)
 	{
-		for (int j = i + 1; j < m_SNorms.size();)
+		for (int j = i + 1; j < m_SNorms.size(); ++j)
 		{
-			vec2 lhs = m_SNorms[i];
-			vec2 rhs = m_SNorms[j];
+			vec2 lhs = m_SNorms[i].norm;
+			vec2 rhs = m_SNorms[j].norm;
 
 			float check = dot(lhs, rhs);
 
 			if (abs(check) >= 1 - FLT_EPSILON)
 			{
-				m_SNorms.erase(m_SNorms.begin() + j);
-			}
-			else
-			{
-				++j;
+				m_SNorms[j].hasParallel = true;
 			}
 		}
 	}

@@ -7,6 +7,7 @@
 #include "Sphere.h"
 #include "Box.h"
 #include "Poly.h"
+#include "Stitched.h"
 
 #define DEBUG_FREQ 5
 
@@ -14,10 +15,11 @@ typedef CollisionInfo(*CollisionTest)(PhysicsObject*, PhysicsObject*);
 
 static CollisionTest collisionFuncs[(int)ShapeID::TOTAL][(int)ShapeID::TOTAL] =
 { 
-{PhysicsScene::plane2Plane, PhysicsScene::plane2Sphere, PhysicsScene::plane2Box, PhysicsScene::plane2Poly},
-{PhysicsScene::sphere2Plane, PhysicsScene::sphere2Sphere, PhysicsScene::sphere2Box, PhysicsScene::sphere2Poly},
-{PhysicsScene::box2Plane, PhysicsScene::box2Sphere, PhysicsScene::box2Box, PhysicsScene::box2Poly},
-{PhysicsScene::poly2Plane, PhysicsScene::poly2Sphere, PhysicsScene::poly2Box, PhysicsScene::poly2Poly}
+{PhysicsScene::plane2Plane, PhysicsScene::plane2Sphere, PhysicsScene::plane2Box, PhysicsScene::plane2Poly, PhysicsScene::plane2Stitched},
+{PhysicsScene::sphere2Plane, PhysicsScene::sphere2Sphere, PhysicsScene::sphere2Box, PhysicsScene::sphere2Poly, PhysicsScene::sphere2Stitched},
+{PhysicsScene::box2Plane, PhysicsScene::box2Sphere, PhysicsScene::box2Box, PhysicsScene::box2Poly, PhysicsScene::box2Stitched},
+{PhysicsScene::poly2Plane, PhysicsScene::poly2Sphere, PhysicsScene::poly2Box, PhysicsScene::poly2Poly, PhysicsScene::poly2Stitched},
+{PhysicsScene::stitched2Plane, PhysicsScene::stitched2Sphere, PhysicsScene::stitched2Box, PhysicsScene::stitched2Poly, PhysicsScene::stitched2Stitched}
 };
 
 PhysicsScene::PhysicsScene()
@@ -29,9 +31,9 @@ PhysicsScene::PhysicsScene()
 
 PhysicsScene::~PhysicsScene()
 {
-	for (auto pActor : m_actors)
+	for (int i = 0; i < m_actors.size(); ++i)
 	{
-		delete pActor;
+		delete m_actors[i];
 	}
 }
 
@@ -56,7 +58,7 @@ bool PhysicsScene::RemoveActor(PhysicsObject* actor)
 
 void PhysicsScene::Update(float dt)
 {
-	//debugScene();
+	debugScene();
 
 	static float accumulatedTime = 0.0f;
 	accumulatedTime += dt;
@@ -242,6 +244,53 @@ CollisionInfo PhysicsScene::plane2Poly(PhysicsObject * obj1, PhysicsObject * obj
 	return sat;
 }
 
+CollisionInfo PhysicsScene::plane2Stitched(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	Plane* plane1 = (Plane*)obj1;
+	Stitched* stitched1 = (Stitched*)obj2;
+
+	vector<CollisionInfo> allCollInfo;
+	CollisionInfo result;
+	result.collNormal = { 0,0 };
+	int count = stitched1->GetPolyCount();
+
+	for (int i = 0; i < count; ++i)
+	{
+		auto poly = stitched1->GetPoly(i);
+		allCollInfo.push_back(plane2Poly(plane1, poly));
+		result.bCollision += allCollInfo[i].bCollision;
+	}
+
+	if (result.bCollision)
+	{
+		CollisionInfo backup;
+		
+		int collCount = 0;
+		for (int i = 0; i < count; ++i)
+		{
+			if (allCollInfo[i].bCollision)
+			{
+				++collCount;
+				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
+				
+				if (allCollInfo[i].fPenetration > backup.fPenetration)
+				{
+					backup = allCollInfo[i];
+				}
+			}
+		}
+		result.collNormal /= collCount;
+
+		result.fPenetration = length(result.collNormal);
+		if (result.fPenetration > FLT_EPSILON)
+			result.collNormal = normalize(result.collNormal);
+		else
+			result = backup;
+	}
+
+	return result;
+}
+
 CollisionInfo PhysicsScene::sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
 {
 	CollisionInfo result;
@@ -343,6 +392,9 @@ CollisionInfo PhysicsScene::sphere2Poly(PhysicsObject * obj1, PhysicsObject * ob
 
 	for (int i = 0; i < poly2->GetSNormCount(); ++i)
 	{
+		if (poly2->GetSNormParallel(i))
+			continue;
+
 		vec2 norm = poly2->GetRotatedSNorm(i);
 
 		sphereDot = dot(norm, sphere1->getPosition());
@@ -370,6 +422,53 @@ CollisionInfo PhysicsScene::sphere2Poly(PhysicsObject * obj1, PhysicsObject * ob
 	}
 
 	return sat;
+}
+
+CollisionInfo PhysicsScene::sphere2Stitched(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	Sphere* sphere1 = (Sphere*)obj1;
+	Stitched* stitched1 = (Stitched*)obj2;
+
+	vector<CollisionInfo> allCollInfo;
+	CollisionInfo result;
+	result.collNormal = { 0,0 };
+	int count = stitched1->GetPolyCount();
+
+	for (int i = 0; i < count; ++i)
+	{
+		auto poly = stitched1->GetPoly(i);
+		allCollInfo.push_back(sphere2Poly(sphere1, poly));
+		result.bCollision += allCollInfo[i].bCollision;
+	}
+
+	if (result.bCollision)
+	{
+		CollisionInfo backup;
+
+		int collCount = 0;
+		for (int i = 0; i < count; ++i)
+		{
+			if (allCollInfo[i].bCollision)
+			{
+				++collCount;
+				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
+
+				if (allCollInfo[i].fPenetration > backup.fPenetration)
+				{
+					backup = allCollInfo[i];
+				}
+			}
+		}
+		result.collNormal /= collCount;
+
+		result.fPenetration = length(result.collNormal);
+		if (result.fPenetration > FLT_EPSILON)
+			result.collNormal = normalize(result.collNormal);
+		else
+			result = backup;
+	}
+
+	return result;
 }
 
 CollisionInfo PhysicsScene::box2Plane(PhysicsObject* obj1, PhysicsObject* obj2)
@@ -531,6 +630,9 @@ CollisionInfo PhysicsScene::box2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
 
 	for (int i = 0; i < poly2->GetSNormCount(); ++i)
 	{
+		if (poly2->GetSNormParallel(i))
+			continue;
+
 		vec2 norm = poly2->GetRotatedSNorm(i);
 
 		boxMin = dot(norm, boxVerts[2]);
@@ -570,6 +672,53 @@ CollisionInfo PhysicsScene::box2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
 	return sat;
 }
 
+CollisionInfo PhysicsScene::box2Stitched(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	Box* box1 = (Box*)obj1;
+	Stitched* stitched1 = (Stitched*)obj2;
+
+	vector<CollisionInfo> allCollInfo;
+	CollisionInfo result;
+	result.collNormal = { 0,0 };
+	int count = stitched1->GetPolyCount();
+
+	for (int i = 0; i < count; ++i)
+	{
+		auto poly = stitched1->GetPoly(i);
+		allCollInfo.push_back(box2Poly(box1, poly));
+		result.bCollision += allCollInfo[i].bCollision;
+	}
+
+	if (result.bCollision)
+	{
+		CollisionInfo backup;
+
+		int collCount = 0;
+		for (int i = 0; i < count; ++i)
+		{
+			if (allCollInfo[i].bCollision)
+			{
+				++collCount;
+				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
+
+				if (allCollInfo[i].fPenetration > backup.fPenetration)
+				{
+					backup = allCollInfo[i];
+				}
+			}
+		}
+		result.collNormal /= collCount;
+
+		result.fPenetration = length(result.collNormal);
+		if (result.fPenetration > FLT_EPSILON)
+			result.collNormal = normalize(result.collNormal);
+		else
+			result = backup;
+	}
+
+	return result;
+}
+
 CollisionInfo PhysicsScene::poly2Plane(PhysicsObject * obj1, PhysicsObject * obj2)
 {
 	return plane2Poly(obj2, obj1);
@@ -603,6 +752,9 @@ CollisionInfo PhysicsScene::poly2Poly(PhysicsObject * obj1, PhysicsObject * obj2
 	
 	for (int i = 0; i < poly1->GetSNormCount(); ++i)
 	{
+		if (poly1->GetSNormParallel(i))
+			continue;
+
 		vec2 norm = poly1->GetRotatedSNorm(i);		
 	
 		poly1->Project(norm, poly1Min, poly1Max);
@@ -628,6 +780,9 @@ CollisionInfo PhysicsScene::poly2Poly(PhysicsObject * obj1, PhysicsObject * obj2
 	
 	for (int i = 0; i < poly2->GetSNormCount(); ++i)
 	{
+		if (poly2->GetSNormParallel(i))
+			continue;
+
 		vec2 norm = poly2->GetRotatedSNorm(i);
 	
 		poly1->Project(norm, poly1Min, poly1Max);
@@ -653,6 +808,78 @@ CollisionInfo PhysicsScene::poly2Poly(PhysicsObject * obj1, PhysicsObject * obj2
 	return sat;
 }
 
+CollisionInfo PhysicsScene::poly2Stitched(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	Poly* poly1 = (Poly*)obj1;
+	Stitched* stitched1 = (Stitched*)obj2;
+
+	vector<CollisionInfo> allCollInfo;
+	CollisionInfo result;
+	result.collNormal = { 0,0 };
+	int count = stitched1->GetPolyCount();
+
+	for (int i = 0; i < count; ++i)
+	{
+		auto poly = stitched1->GetPoly(i);
+		allCollInfo.push_back(poly2Poly(poly1, poly));
+		result.bCollision += allCollInfo[i].bCollision;
+	}
+
+	if (result.bCollision)
+	{
+		CollisionInfo backup;
+
+		int collCount = 0;
+		for (int i = 0; i < count; ++i)
+		{
+			if (allCollInfo[i].bCollision)
+			{
+				++collCount;
+				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
+
+				if (allCollInfo[i].fPenetration > backup.fPenetration)
+				{
+					backup = allCollInfo[i];
+				}
+			}
+		}
+		result.collNormal /= collCount;
+
+		result.fPenetration = length(result.collNormal);
+		if (result.fPenetration > FLT_EPSILON)
+			result.collNormal = normalize(result.collNormal);
+		else
+			result = backup;
+	}
+
+	return result;
+}
+
+CollisionInfo PhysicsScene::stitched2Plane(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return plane2Stitched(obj2, obj1);
+}
+
+CollisionInfo PhysicsScene::stitched2Sphere(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return sphere2Stitched(obj2, obj1);
+}
+
+CollisionInfo PhysicsScene::stitched2Box(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return box2Stitched(obj2, obj1);
+}
+
+CollisionInfo PhysicsScene::stitched2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return poly2Stitched(obj2, obj1);
+}
+
+CollisionInfo PhysicsScene::stitched2Stitched(PhysicsObject * obj1, PhysicsObject * obj2)
+{
+	return CollisionInfo();
+}
+
 void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, RigidBody * rb1, RigidBody * rb2)
 {
 	overlap = abs(overlap);
@@ -668,17 +895,20 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 	// check velocity is real
 	vec2 rb1Pos = rb1->getPosition();
 	vec2 rb1Vel = rb1->getVelocity();
+	vec2 rb1UnitVel = normalize(rb1Vel);
 	float rb1Speed = length(rb1Vel);
-	if (rb1Speed == 0 || rb1Speed != rb1Speed)
+	if (rb1UnitVel.x != rb1UnitVel.x)
 	{
 		rb1GoodVel = false;
-		rb1Vel = collNormal;
+		rb1Vel = { 0,0 };
+		rb1UnitVel = { 0,0 };
 		rb1Speed = 0;
 	}
-	vec2 rb1UnitVel = normalize(rb1Vel);
 
 	vec2 rb1Offset = { 0,0 };
 	vec2 rb2Offset = { 0,0 };
+
+	vec2 relVel = rb1UnitVel;
 	
 	// IF rb2 exists
 	if (rb2)
@@ -686,19 +916,17 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 		// check velocity is real
 		vec2 rb2Pos = rb2->getPosition();
 		vec2 rb2Vel = rb2->getVelocity();
+		vec2 rb2UnitVel = normalize(rb2Vel);
 		float rb2Speed = length(rb2Vel);
-		if (rb2Speed == 0 || rb2Speed != rb2Speed)
+		if (rb2UnitVel.x != rb2UnitVel.x)
 		{
 			rb2GoodVel = false;
-			rb2Vel = -collNormal;
+			rb2Vel = { 0,0 };
+			rb2UnitVel = { 0,0 };
 			rb2Speed = 0;
 		}
-		vec2 rb2UnitVel = normalize(rb2Vel);
 
-		if (rb1GoodVel + rb2GoodVel == false)
-		{
-			rb1Speed = 1, rb2Speed = 1;
-		}
+		relVel -= rb2UnitVel;
 
 		// Get the real ratio
 		float rb1Mom = rb1Speed * rb1->getMass();
@@ -706,35 +934,28 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 
 		float ratio = rb1Mom / (rb1Mom + rb2Mom);
 
-		float fDot = dot(rb1UnitVel, rb2UnitVel);
-		if (fDot > 0.8f || overlap > 2.0f)
-		{
-			float fSep = dot(rb1UnitVel, rb1Pos) - dot(rb1UnitVel, rb2Pos);
-			if (fSep > 0)
-				ratio = 1.0f;
-			else
-				ratio = 0.0f;
-		}
+		if (ratio != ratio)
+			return;
 	
 		// Restitute rb2
-		rb2Offset = rb2UnitVel * overlap * (1 - ratio);
+		rb2Offset = relVel * overlap * (1 - ratio);
 		rb2->setPosition(rb2Pos - rb2Offset);
 	}
 
 	// Restitute rb1
-	rb1Offset = rb1UnitVel * overlap * ratio;
+	rb1Offset = relVel * overlap * ratio;
 	rb1->setPosition(rb1Pos - rb1Offset);
 
-	if (overlap > 2.0f)
-	{
-		printf("BAD STUFF @ %f \n", time);
-		printf("obj1 : %i : POS x %f, y %f : OFS x %f, y%f \n", rb1->getShapeID(), rb1->getPosition().x, rb1->getPosition().y, rb1Offset.x, rb1Offset.y);
-		if (rb2)
-			printf("obj2 : %i : POS x %f, y %f : OFS x %f, y%f \n", rb2->getShapeID(), rb2->getPosition().x, rb2->getPosition().y, rb2Offset.x, rb2Offset.y);
-		printf("ratio %f \n", ratio);
-		printf("overlap %f \n", overlap);
-		printf("\n");
-	}
+	//if (overlap > 2.0f)
+	//{
+	//	printf("BAD STUFF @ %f \n", time);
+	//	printf("obj1 : %i : POS x %f, y %f : OFS x %f, y%f \n", rb1->getShapeID(), rb1->getPosition().x, rb1->getPosition().y, rb1Offset.x, rb1Offset.y);
+	//	if (rb2)
+	//		printf("obj2 : %i : POS x %f, y %f : OFS x %f, y%f \n", rb2->getShapeID(), rb2->getPosition().x, rb2->getPosition().y, rb2Offset.x, rb2Offset.y);
+	//	printf("ratio %f \n", ratio);
+	//	printf("overlap %f \n", overlap);
+	//	printf("\n");
+	//}
 }
 
 void PhysicsScene::debugScene()

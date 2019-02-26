@@ -9,10 +9,14 @@ public:
 	~Sphere();
 	virtual void makeGizmo();
 	virtual bool checkCollision(PhysicsObject* pOther);
-	float getRadius() { return m_radius; }
-	glm::vec4 getColour() { return m_colour; }
+	inline float getRadius() { return m_radius; }
+	inline glm::vec4 getColour() { return m_colour; }
+
+	inline void HideDirLine() { m_bDirLine = false; };
 protected:
 	float m_radius;
 	glm::vec4 m_colour;
+
+	bool m_bDirLine = true;
 };
 

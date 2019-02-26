@@ -11,7 +11,7 @@ Plane::Plane() : PhysicsObject::PhysicsObject(ShapeID::Plane)
 
 Plane::Plane(vec2 normal, float distance) : PhysicsObject::PhysicsObject(ShapeID::Plane)
 {
-	m_normal = normal;
+	m_normal = normalize(normal);
 	m_distanceToOrigin = distance;
 }
 

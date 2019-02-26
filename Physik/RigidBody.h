@@ -4,7 +4,7 @@ class RigidBody : public PhysicsObject {
 public:
 	RigidBody(ShapeID shapeID, glm::vec2 position,
 		glm::vec2 velocity, float rotation, float mass, float elasticity);
-	~RigidBody();
+	virtual ~RigidBody();
 
 	virtual void fixedUpdate(glm::vec2 const& gravity, float timeStep);
 	virtual void debug();
@@ -12,7 +12,7 @@ public:
 	void applyForce(glm::vec2 const& force);
 	void applyForceToActor(RigidBody* actor2, glm::vec2 const& force);
 
-	virtual bool checkCollision(PhysicsObject* pOther) = 0;
+	//virtual bool checkCollision(PhysicsObject* pOther) = 0;
 
 	inline void setPosition(glm::vec2 const& pos) { m_position = pos; }
 	inline glm::vec2 getPosition() const { return m_position; }

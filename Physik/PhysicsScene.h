@@ -14,6 +14,7 @@ struct CollisionInfo
 	bool bCollision = false;
 	glm::vec2 collNormal;
 	float fPenetration;
+
 };
 
 class PhysicsScene
@@ -37,18 +38,31 @@ public:
 	static CollisionInfo plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo plane2Box(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo plane2Poly(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo plane2Stitched(PhysicsObject* obj1, PhysicsObject* obj2);
+
 	static CollisionInfo sphere2Plane(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo sphere2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo sphere2Poly(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo sphere2Stitched(PhysicsObject* obj1, PhysicsObject* obj2);
+
 	static CollisionInfo box2Plane(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo box2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo box2Box(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo box2Poly(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo box2Stitched(PhysicsObject* obj1, PhysicsObject* obj2);
+
 	static CollisionInfo poly2Plane(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo poly2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo poly2Box(PhysicsObject* obj1, PhysicsObject* obj2);
 	static CollisionInfo poly2Poly(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo poly2Stitched(PhysicsObject* obj1, PhysicsObject* obj2);
+
+	static CollisionInfo stitched2Plane(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo stitched2Sphere(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo stitched2Box(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo stitched2Poly(PhysicsObject* obj1, PhysicsObject* obj2);
+	static CollisionInfo stitched2Stitched(PhysicsObject* obj1, PhysicsObject* obj2);
 
 	void Restitution(float overlap, glm::vec2 const& collNormal, RigidBody* rb1, RigidBody* rb2 = nullptr);
 

@@ -170,6 +170,8 @@
     <ClCompile Include="Poly.cpp" />
     <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="Sphere.cpp" />
+    <ClCompile Include="Stitched.cpp" />
+    <ClCompile Include="Transform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Box.h" />
@@ -180,6 +182,8 @@
     <ClInclude Include="Poly.h" />
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="Sphere.h" />
+    <ClInclude Include="Stitched.h" />
+    <ClInclude Include="Transform.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

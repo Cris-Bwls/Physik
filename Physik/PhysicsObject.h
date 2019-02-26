@@ -7,6 +7,7 @@ enum class ShapeID : int
 	Sphere,
 	Box,
 	Poly,
+	Stitched,
 
 	TOTAL
 };
