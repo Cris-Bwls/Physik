@@ -15,6 +15,8 @@ enum class ShapeID : int
 class PhysicsObject
 {
 public:
+	inline virtual ~PhysicsObject() {};
+
 	virtual void fixedUpdate(glm::vec2 const& gravity, float timeStep) = 0;
 	virtual void debug() = 0;
 	virtual void makeGizmo() = 0;
