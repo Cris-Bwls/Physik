@@ -27,6 +27,7 @@ public:
 	inline void InvertIsFilled() { m_bIsFilled = !m_bIsFilled; };
 	
 	void resolveCollision(RigidBody* actor2, glm::vec2 const& normal);
+	void resolveFriction(glm::vec2 const& normal, RigidBody* actor2 = nullptr);
 protected:
 	void DebugVelocity(glm::vec2 const& startPoint);
 

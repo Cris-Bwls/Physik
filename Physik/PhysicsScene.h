@@ -70,6 +70,8 @@ public:
 protected:
 	static bool ProjectionOverlap(float const& min1, float const& max1, float const& min2, float const& max2, float & overlap);
 
+	void ApplyFriction(RigidBody* rb, glm::vec2 const& force, glm::vec2 const& contact, float const& staticCo, float const& dynamicCo);
+
 	glm::vec2 m_gravity;
 	float m_timeStep;
 	vector<PhysicsObject*> m_actors;

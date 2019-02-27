@@ -45,7 +45,7 @@ Stitched::~Stitched()
 void Stitched::fixedUpdate(vec2 const& gravity, float timeStep)
 {
 	RigidBody::fixedUpdate(gravity, timeStep);
-
+	
 	Transform pos = Transform();
 	pos.SetPosition(m_position);
 

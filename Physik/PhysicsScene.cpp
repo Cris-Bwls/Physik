@@ -877,7 +877,58 @@ CollisionInfo PhysicsScene::stitched2Poly(PhysicsObject * obj1, PhysicsObject * 
 
 CollisionInfo PhysicsScene::stitched2Stitched(PhysicsObject * obj1, PhysicsObject * obj2)
 {
-	return CollisionInfo();
+	Stitched* stitched1 = (Stitched*)obj1;
+	Stitched* stitched2 = (Stitched*)obj2;
+
+	vector<CollisionInfo> allCollInfo;
+	CollisionInfo result;
+	result.collNormal = { 0,0 };
+	int count1 = stitched1->GetPolyCount();
+	int count2 = stitched2->GetPolyCount();
+
+	for (int i = 0; i < count1; ++i)
+	{
+		auto poly1 = stitched1->GetPoly(i);
+
+		allCollInfo.push_back(poly2Stitched(poly1, stitched2));
+		result.bCollision += allCollInfo[i].bCollision;
+
+		//for (int j = 0; j < count2; ++j)
+		//{
+		//	auto poly2 = stitched2->GetPoly(j);
+		//	allCollInfo.push_back(poly2Poly(poly1, poly2));
+		//	result.bCollision += allCollInfo[i].bCollision;
+		//}
+	}
+
+	if (result.bCollision)
+	{
+		CollisionInfo backup;
+
+		int collCount = 0;
+		for (int i = 0; i < allCollInfo.size(); ++i)
+		{
+			if (allCollInfo[i].bCollision)
+			{
+				++collCount;
+				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
+
+				if (allCollInfo[i].fPenetration > backup.fPenetration)
+				{
+					backup = allCollInfo[i];
+				}
+			}
+		}
+		result.collNormal /= collCount;
+
+		result.fPenetration = length(result.collNormal);
+		if (result.fPenetration > FLT_EPSILON)
+			result.collNormal = normalize(result.collNormal);
+		else
+			result = backup;
+	}
+
+	return result;
 }
 
 void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, RigidBody * rb1, RigidBody * rb2)
@@ -988,4 +1039,9 @@ bool PhysicsScene::ProjectionOverlap(float const & min1, float const & max1, flo
 
 	overlap = fMax - fMin;
 	return true;
+}
+
+void PhysicsScene::ApplyFriction(RigidBody* rb, glm::vec2 const& force, glm::vec2 const& contact, float const& staticCo, float const& dynamicCo)
+{
+
 }

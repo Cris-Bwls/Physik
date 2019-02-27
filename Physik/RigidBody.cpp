@@ -69,3 +69,14 @@ void RigidBody::resolveCollision(RigidBody* actor2, vec2 const& normal)
 
 	applyForceToActor(actor2, -force);
 }
+
+void RigidBody::resolveFriction(glm::vec2 const & normal, RigidBody * actor2)
+{
+	vec2 fricNormal;
+	fricNormal.x = normal.y;
+	fricNormal.y = -normal.x;
+	if (actor2)
+	{
+
+	}
+}
