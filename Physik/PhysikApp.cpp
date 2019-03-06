@@ -12,6 +12,8 @@
 
 using namespace glm;
 
+#define FRICTION_COEFFICIENTS 1.0f, 0.5f
+
 PhysikApp::PhysikApp() {
 
 }
@@ -38,46 +40,46 @@ bool PhysikApp::startup() {
 
 	vec2 normalLeft = normalize(vec2(-1,0));
 	vec2 normalRight = normalize(vec2(1,0));
-	vec2 normalDown = normalize(vec2(0,1));
+	vec2 normalDown = normalize(vec2(0,-1));
 	vec2 normalUp = normalize(vec2(0,1));
 
 	float fAspectRatio = getWindowWidth() / getWindowHeight();
 
-	Plane* plane1 = new Plane(normalLeft, 90.0f);
-	Plane* plane2 = new Plane(normalRight, 90.0f);
-	Plane* plane3 = new Plane(normalUp, 56.0f);// 90.0f / fAspectRatio);
-	Plane* plane4 = new Plane(normalDown, -56.0f);//-90.0f / fAspectRatio);
+	Plane* plane1 = new Plane(normalLeft, 90.0f, FRICTION_COEFFICIENTS);
+	Plane* plane2 = new Plane(normalRight, 90.0f, FRICTION_COEFFICIENTS);
+	Plane* plane4 = new Plane(normalDown, 56.0f, FRICTION_COEFFICIENTS);//-90.0f / fAspectRatio);
+	Plane* plane3 = new Plane(normalUp, 56.0f, FRICTION_COEFFICIENTS);// 90.0f / fAspectRatio);
 	m_pPhysicsScene->AddActor(plane1);
 	m_pPhysicsScene->AddActor(plane2);
 	m_pPhysicsScene->AddActor(plane3);
 	m_pPhysicsScene->AddActor(plane4);
 	
-	Plane* diag = new Plane({ 1,1 }, -30.0f);
-	m_pPhysicsScene->AddActor(diag);
-	//
-	////Box* box1 = new Box({ 5,5 }, { 20, 40 }, { 5,10 }, 1, 1.0f, { 0,0,1,1 }, true);
-	////Box* box2 = new Box({ 5,5 }, { 20, 30 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
+	//Plane* diag = new Plane({ 2.0f,1 }, 0.0f, FRICTION_COEFFICIENTS);
+	//m_pPhysicsScene->AddActor(diag);
 	////
-	////m_pPhysicsScene->AddActor(box1);
-	////m_pPhysicsScene->AddActor(box2);
+	//Box* box1 = new Box({ 5,5 }, { 20, 40 }, { 5,10 }, 1, 0.8f, { 0,0,1,1 }, true);
+	//Box* box2 = new Box({ 5,5 }, { 20, 30 }, { 0,10 }, 1, 0.8f, { 0,0,1,1 }, true);
 	//
-	//Box* box1 = new Box({ 5,5 }, { 20, 20 }, { 10,0 }, 1, 1.0f, { 0,0,1,1 }, true);
-	//Box* box2 = new Box({ 5,5 }, { 0, 0 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
-	//Box* box3 = new Box({ 5,5 }, { 40, 0 }, { 10,0 }, 1, 1.0f, { 0,0,1,1 }, true);
+	//m_pPhysicsScene->AddActor(box1);
+	//m_pPhysicsScene->AddActor(box2);
+	//
+	//Box* box1 = new Box({ 5,5 }, { 80, -50 }, { -80,0 }, 1, 0.0f,  FRICTION_COEFFICIENTS, 0.01f, 0.01f, { 0,0,1,1 }, true);
+	//Box* box2 = new Box({ 5,5 }, { 0, -35 }, { 0,0 }, 1, 0.0f, FRICTION_COEFFICIENTS, 0.1f, 0.1f, { 0,0,1,1 }, true);
+	//Box* box3 = new Box({ 5,5 }, { 0, -50 }, { 0,0 }, 1, 0.0f, FRICTION_COEFFICIENTS, 0.1f, 0.1f, { 0,0,1,1 }, true);
 	//Box* box4 = new Box({ 5,5 }, { 0, 30 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
 	//Box* box5 = new Box({ 5,5 }, { 60, 10 }, { 10,0 }, 1, 1.0f, { 0,0,1,1 }, true);
 	//Box* box6 = new Box({ 5,5 }, {-40, 15 }, { 0,10 }, 1, 1.0f, { 0,0,1,1 }, true);
-	//m_pPhysicsScene->AddActor(box1);
 	//m_pPhysicsScene->AddActor(box2);
 	//m_pPhysicsScene->AddActor(box3);
+	//m_pPhysicsScene->AddActor(box1);
 	//m_pPhysicsScene->AddActor(box4);
 	//m_pPhysicsScene->AddActor(box5);
 	//m_pPhysicsScene->AddActor(box6);
 	//
-	//Sphere* ball1 = new Sphere(vec2(-20, 0), vec2(0, 0), 4.0f, 1.0f, 4, vec4(1, 0, 0, 1));
+	Sphere* ball1 = new Sphere(vec2(-20, 0), vec2(20, 0), 0, 4.0f, 1.0f, FRICTION_COEFFICIENTS, 0.01f, 0.1f, 4, vec4(1, 0, 0, 1));
 	//Sphere* ball2 = new Sphere(vec2(0, -20), vec2(0, 0), 4.0f, 1.0f, 4, vec4(0, 1, 0, 1));
 	//
-	//m_pPhysicsScene->AddActor(ball1);
+	m_pPhysicsScene->AddActor(ball1);
 	//m_pPhysicsScene->AddActor(ball2);
 	//ball1->applyForce(vec2(15, 0));
 	//ball2->applyForce(vec2(0, 10));
@@ -107,11 +109,11 @@ bool PhysikApp::startup() {
 		{vec2(10, -10), vec2(0, -5), vec2(0,0), vec2(5, 0)},
 		{vec2(-10, -10), vec2(-5, 0), vec2(0,0), vec2(0, -5)}
 	};
-	Stitched* stitched1 = new Stitched(stitchedVerts, { 0,0 }, { 10,10 }, 0, 1, 1, { 1,1,0,1 });
+	Stitched* stitched1 = new Stitched(stitchedVerts, { 0,0 }, { -10,-10 }, 0.5f, 0, 1, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, { 1,1,0,1 });
 	m_pPhysicsScene->AddActor(stitched1);
-
-	Stitched* stitched2 = new Stitched(stitchedVerts, { 40,40 }, { -10,-10 }, 0.5f, 1, 1, { 1,1,0,1 });
-	m_pPhysicsScene->AddActor(stitched2);
+	//
+	//Stitched* stitched2 = new Stitched(stitchedVerts, { 40,40 }, { -10,-10 }, 0.5f, 1, 1, { 1,1,0,1 });
+	//m_pPhysicsScene->AddActor(stitched2);
 
 	return true;
 }

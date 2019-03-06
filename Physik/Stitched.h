@@ -10,7 +10,7 @@ class Stitched :
 	public RigidBody
 {
 public:
-	Stitched(vector<vector<vec2>> const& allVertices, vec2 position, vec2 velocity, float rotation, float mass, float elasticity, glm::vec4 colour);
+	Stitched(vector<vector<vec2>> const& allVertices, vec2 position, vec2 velocity, float rotation, float fAngVel, float mass, float elasticity, float fFricCoStatic, float fFricCoDynamic, float fDrag, float fAngDrag, glm::vec4 colour);
 	~Stitched();
 
 	void fixedUpdate(vec2 const& gravity, float timeStep);

@@ -4,8 +4,8 @@
 #define DEBUG true
 #define SHOW_NORMALS true
 
-Poly::Poly(vector<vec2> const & vertices, vec2 position, vec2 velocity, float rotation, float mass, float elasticity, glm::vec4 colour) :
-	RigidBody::RigidBody(ShapeID::Poly, position, velocity, rotation, mass, elasticity)
+Poly::Poly(vector<vec2> const & vertices, vec2 position, vec2 velocity, float rotation, float fAngVel, float mass, float elasticity, float fFricCoStatic, float fFricCoDynamic, float fDrag, float fAngDrag, glm::vec4 colour) :
+	RigidBody::RigidBody(ShapeID::Poly, position, velocity, rotation, fAngVel, mass, elasticity, fFricCoStatic, fFricCoDynamic, fDrag, fAngDrag)
 {
 	m_Colour = colour;
 	m_Vertices = vertices;
@@ -166,7 +166,7 @@ void Poly::CreateBroadColl()
 	colour -= m_Colour;
 	colour.a = 0.5f;
 
-	m_pBroadColl = new Sphere(m_position, { 0,0 }, m_mass, m_elasticity, radius, colour);
+	m_pBroadColl = new Sphere(m_position, { 0,0 }, 0, m_mass, m_elasticity, 1.0f, 1.0f, 0, 0, radius, colour);
 	m_pBroadColl->HideDirLine();
 }
 

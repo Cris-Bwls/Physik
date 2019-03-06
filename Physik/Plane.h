@@ -8,8 +8,7 @@ using namespace glm;
 class Plane : public PhysicsObject
 {
 public:
-	Plane();
-	Plane(glm::vec2 normal, float distance);
+	Plane(glm::vec2 normal, float distance, float fFricCoStatic, float fFricCoDynamic);
 	~Plane();
 
 	virtual void fixedUpdate(vec2 const& gravity, float timeStep) {};
@@ -21,7 +20,7 @@ public:
 	inline float getDistance() { return m_distanceToOrigin; };
 
 	void Plane::resolveCollision(RigidBody* actor2, vec2 const& normal);
-
+	
 protected:
 	vec2 m_normal;
 	float m_distanceToOrigin;

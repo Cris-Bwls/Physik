@@ -4,8 +4,8 @@
 using aie::Gizmos;
 using namespace glm;
 
-Sphere::Sphere(glm::vec2 position, glm::vec2 velocity, float mass, float elasticity, float radius, glm::vec4 colour) :
-	RigidBody::RigidBody(ShapeID::Sphere, position, velocity, 0, mass, elasticity)
+Sphere::Sphere(glm::vec2 position, glm::vec2 velocity, float fAngRot, float mass, float elasticity, float fFricCoStatic, float fFricCoDynamic, float fDrag, float fAngDrag, float radius, glm::vec4 colour) :
+	RigidBody::RigidBody(ShapeID::Sphere, position, velocity, 0, fAngRot, mass, elasticity, fFricCoStatic, fFricCoDynamic, fDrag, fAngDrag)
 {
 	m_radius = radius;
 	m_colour = colour;

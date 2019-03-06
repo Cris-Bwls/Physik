@@ -1,7 +1,7 @@
 #include "Stitched.h"
 
-Stitched::Stitched(vector<vector<vec2>> const & allVertices, vec2 position, vec2 velocity, float rotation, float mass, float elasticity, glm::vec4 colour) :
-	RigidBody(ShapeID::Stitched, position, velocity, rotation, mass, elasticity)
+Stitched::Stitched(vector<vector<vec2>> const & allVertices, vec2 position, vec2 velocity, float rotation, float fAngVel, float mass, float elasticity, float fFricCoStatic, float fFricCoDynamic, float fDrag, float fAngDrag, glm::vec4 colour) :
+	RigidBody(ShapeID::Stitched, position, velocity, rotation, fAngVel, mass, elasticity, fFricCoStatic, fFricCoDynamic, fDrag, fAngDrag)
 {
 	m_Colour = colour;
 
@@ -21,7 +21,7 @@ Stitched::Stitched(vector<vector<vec2>> const & allVertices, vec2 position, vec2
 			verts.push_back(allVertices[i][j] - pos);
 		}
 		
-		Poly* poly = new Poly(verts, position + pos, { 0,0 }, rotation, 1, 1, colour);
+		Poly* poly = new Poly(verts, position + pos, { 0,0 }, rotation, 1, 1, 1, 1, 1, 1, 1, colour);
 		m_Polys.push_back(poly);
 	}
 

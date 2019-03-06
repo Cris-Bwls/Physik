@@ -17,7 +17,7 @@ struct SurfaceNorm
 class Poly : public RigidBody
 {
 public:
-	Poly(vector<vec2> const& vertices, vec2 position, vec2 velocity, float rotation, float mass, float elasticity, glm::vec4 colour);
+	Poly(vector<vec2> const& vertices, vec2 position, vec2 velocity, float rotation, float fAngVel, float mass, float elasticity, float fFricCoStatic, float fFricCoDynamic, float fDrag, float fAngDrag, glm::vec4 colour);
 	~Poly();
 
 	inline void SetRotation(float rotation) { m_rotation = rotation; };

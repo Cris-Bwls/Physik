@@ -3,13 +3,7 @@
 
 using aie::Gizmos;
 
-Plane::Plane() : PhysicsObject::PhysicsObject(ShapeID::Plane)
-{
-	m_normal = { 0, 1 };
-	m_distanceToOrigin = 0;
-}
-
-Plane::Plane(vec2 normal, float distance) : PhysicsObject::PhysicsObject(ShapeID::Plane)
+Plane::Plane(vec2 normal, float distance, float fFricCoStatic, float fFricCoDynamic) : PhysicsObject::PhysicsObject(ShapeID::Plane, fFricCoStatic, fFricCoDynamic)
 {
 	m_normal = normalize(normal);
 	m_distanceToOrigin = distance;
