@@ -932,91 +932,22 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 	if (overlap <= 0.075f)
 		return;
 
-	bool debug = false;
-	bool rb1GoodVel = true;
-	bool rb2GoodVel = true;
-
 	float ratio = 1;
-
-	bool BROKEN = true;
-	if (BROKEN)
-	{
-		if (rb2)
-		{
-			float rb1InvMass = 1 / rb1->getMass();
-			float rb2InvMass = 1 / rb2->getMass();
-
-			float rb1Mom = length(rb1->getVelocity()) * rb1InvMass;
-			float rb2Mom = length(rb2->getVelocity()) * rb2InvMass;
-
-			ratio = rb1Mom / (rb1Mom + rb2Mom);
-			rb2->setPosition(rb2->getPosition() + (collNormal * overlap * (1 - ratio)));
-			rb1->setPosition(rb1->getPosition() - (collNormal * overlap * ratio));
-		}
-		else
-			rb1->setPosition(rb1->getPosition() + (collNormal * overlap * ratio));
-		return;
-	}
-
-
-	// check velocity is real
-	vec2 rb1Pos = rb1->getPosition();
-	vec2 rb1Vel = rb1->getVelocity();
-	vec2 rb1UnitVel = normalize(rb1Vel);
-	float rb1Speed = length(rb1Vel);
-
-	// NAN check
-	if (rb1Speed == 0)
-	{
-		rb1GoodVel = false;
-		rb1Vel = { 0,0 };
-		rb1UnitVel = { 0,0 };
-		rb1Speed = 0;
-	}
-	vec2 relVel = rb1UnitVel;
-
-	/// These are for debugging
-	vec2 rb1Offset = { 0,0 };
-	vec2 rb2Offset = { 0,0 };
-
-
-	// IF rb2 exists
 	if (rb2)
 	{
-		// check velocity is real
-		vec2 rb2Pos = rb2->getPosition();
-		vec2 rb2Vel = rb2->getVelocity();
-		vec2 rb2UnitVel = normalize(rb2Vel);
-		float rb2Speed = length(rb2Vel);
+		float rb1InvMass = 1 / rb1->getMass();
+		float rb2InvMass = 1 / rb2->getMass();
 
-		// NAN check
-		if (rb2Speed == 0)
-		{
-			rb2GoodVel = false;
-			rb2Vel = { 0,0 };
-			rb2UnitVel = { 0,0 };
-			rb2Speed = 0;
-		}
-
-		relVel -= rb2UnitVel;
-
-		// Get the real ratio
-		float rb1Mom = rb1Speed * (1 / rb1->getMass());
-		float rb2Mom = rb2Speed * (1 / rb2->getMass());
+		float rb1Mom = length(rb1->getVelocity()) * rb1InvMass;
+		float rb2Mom = length(rb2->getVelocity()) * rb2InvMass;
 
 		ratio = rb1Mom / (rb1Mom + rb2Mom);
-
-		if (ratio != ratio)
-			return;
-
-		// Restitute rb2
-		rb2Offset = relVel * overlap * (1 - ratio);
-		rb2->setPosition(rb2Pos - rb2Offset);
+		rb2->setPosition(rb2->getPosition() + (collNormal * overlap * (1 - ratio)));
+		rb1->setPosition(rb1->getPosition() - (collNormal * overlap * ratio));
 	}
-
-	// Restitute rb1
-	rb1Offset = relVel * overlap * ratio;
-	rb1->setPosition(rb1Pos - rb1Offset);
+	else
+		rb1->setPosition(rb1->getPosition() + (collNormal * overlap * ratio));
+	return;
 }
 
 void PhysicsScene::debugScene()
