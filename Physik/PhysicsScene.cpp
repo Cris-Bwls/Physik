@@ -111,7 +111,6 @@ void PhysicsScene::checkForCollision()
 					if (shapeID1 == (int)ShapeID::Plane)
 					{
 						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object2);
-						CalcTorque(info.collPoint, (RigidBody*)object2);
 						((Plane*)object1)->resolveCollision((RigidBody*)object2, info.collNormal);
 						((RigidBody*)object2)->resolveFriction(object1, info.collNormal, m_gravity, m_timeStep);
 
@@ -121,7 +120,6 @@ void PhysicsScene::checkForCollision()
 					else if (shapeID2 == (int)ShapeID::Plane)
 					{
 						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object1);
-						CalcTorque(info.collPoint, (RigidBody*)object1);
 						((Plane*)object2)->resolveCollision((RigidBody*)object2, info.collNormal);
 						((RigidBody*)object1)->resolveFriction(object2, info.collNormal, m_gravity, m_timeStep);
 
@@ -131,7 +129,6 @@ void PhysicsScene::checkForCollision()
 					else
 					{
 						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object1, (RigidBody*)object2);
-						CalcTorque(info.collPoint, (RigidBody*)object1, (RigidBody*)object2);
 						((RigidBody*)object1)->resolveCollision((RigidBody*)object2, info.collNormal);
 						((RigidBody*)object1)->resolveFriction(object2, info.collNormal, m_gravity, m_timeStep);
 
@@ -180,7 +177,6 @@ CollisionInfo PhysicsScene::plane2Sphere(PhysicsObject* obj1, PhysicsObject* obj
 			result.collNormal = collisionNormal;
 			result.bCollision = true;
 			result.fPenetration = intersection;
-			result.collPoint = sphere2->getPosition() + collisionNormal * (sphere2->getRadius() - intersection);
 
 			return result;
 		}
@@ -211,7 +207,6 @@ CollisionInfo PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		result.bCollision = pen >= 0;
 		result.fPenetration = pen;
 		result.collNormal = collNorm;
-		result.collPoint = {0,0};
 	}
 	return result;
 }
@@ -235,22 +230,6 @@ CollisionInfo PhysicsScene::plane2Poly(PhysicsObject * obj1, PhysicsObject * obj
 	sat.bCollision = ProjectionOverlap(planeDistance, planeDistance, polyMin, polyMax, sat.fPenetration);
 
 	sat.fPenetration -= (polyMax - polyMin);
-	
-	float distance = FLT_MAX;
-	vec2 closest = { 0,0 };
-
-	for (int i = 0; i < poly2->GetVerticeCount(); ++i)
-	{
-		vec2 vert = poly2->GetRotatedVert(i) + poly2->getPosition();
-		float tempDist = DistPointPlane(vert, plane1);
-		if (tempDist < distance)
-		{
-			distance = tempDist;
-			closest = ClosestPtPointPlane(vert, plane1);
-		}
-	}
-
-	sat.collPoint = closest;
 
 	return sat;
 }
@@ -283,7 +262,6 @@ CollisionInfo PhysicsScene::plane2Stitched(PhysicsObject * obj1, PhysicsObject *
 			{
 				++collCount;
 				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
-				result.collPoint += allCollInfo[i].collPoint;
 				
 				if (allCollInfo[i].fPenetration > backup.fPenetration)
 				{
@@ -292,7 +270,6 @@ CollisionInfo PhysicsScene::plane2Stitched(PhysicsObject * obj1, PhysicsObject *
 			}
 		}
 		result.collNormal /= collCount;
-		result.collPoint /= collCount;
 
 		result.fPenetration = length(result.collNormal);
 		if (result.fPenetration > FLT_EPSILON)
@@ -341,8 +318,6 @@ CollisionInfo PhysicsScene::sphere2Sphere(PhysicsObject* obj1, PhysicsObject* ob
 			result.collNormal = normalize(sphere1->getPosition() - sphere2->getPosition());
 			result.bCollision = true;
 
-			result.collPoint = sphere1->getPosition() + (result.collNormal * (sphere1->getRadius() - pen));
-
 			return result;
 		}
 	}
@@ -378,8 +353,6 @@ CollisionInfo PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 
 			result.bCollision = true;
 			result.fPenetration = pen;
-
-			result.collPoint = spherePos + (result.collNormal * (sphere1->getRadius() - pen));
 
 			if (pen != pen)
 				printf("FUCK");
@@ -437,9 +410,6 @@ CollisionInfo PhysicsScene::sphere2Poly(PhysicsObject * obj1, PhysicsObject * ob
 		}
 	}
 
-	if (sat.bCollision)
-		sat.collPoint = sphere1->getPosition() + (sat.collNormal * (sphere1->getRadius() - sat.fPenetration));
-
 	return sat;
 }
 
@@ -471,7 +441,6 @@ CollisionInfo PhysicsScene::sphere2Stitched(PhysicsObject * obj1, PhysicsObject 
 			{
 				++collCount;
 				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
-				result.collPoint += allCollInfo[i].collPoint;
 
 				if (allCollInfo[i].fPenetration > backup.fPenetration)
 				{
@@ -480,7 +449,6 @@ CollisionInfo PhysicsScene::sphere2Stitched(PhysicsObject * obj1, PhysicsObject 
 			}
 		}
 		result.collNormal /= collCount;
-		result.collPoint /= collCount;
 
 		result.fPenetration = length(result.collNormal);
 		if (result.fPenetration > FLT_EPSILON)
@@ -576,7 +544,6 @@ CollisionInfo PhysicsScene::box2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		result.collNormal = collisionNormal;
 		result.bCollision = true;
 		result.fPenetration = pen;
-		result.collPoint = { 0,0 };
 		
 		return result;
 	}
@@ -690,45 +657,7 @@ CollisionInfo PhysicsScene::box2Poly(PhysicsObject * obj1, PhysicsObject * obj2)
 			sat.fPenetration = overlap;
 			sat.collNormal = norm;
 		}
-	}
-
-	if (sat.bCollision)
-	{
-		float distance = FLT_MAX;
-		vec2 closest = {0,0};
-
-		for (int i = 0; i < 4; ++i)
-		{
-			vec2 boxStart = boxVerts[i];
-			vec2 boxEnd;
-			if (i + 1 >= 4)
-				boxEnd = boxVerts[0];
-			else
-				boxEnd = boxVerts[i + 1];
-
-			for (int j = 0; j < poly2->GetVerticeCount(); ++j)
-			{
-				vec2 polyStart = poly2->getPosition() + poly2->GetRotatedVert(j);
-				vec2 polyEnd = poly2->getPosition();
-				if (j + 1 >= poly2->GetVerticeCount())
-					polyEnd += poly2->GetRotatedVert(0);
-				else
-					polyEnd += poly2->GetRotatedVert(j+1);
-
-				vec2 tempClose1, tempClose2;
-				float s, t;
-
-				float tempDist = ClosestPtSegmentSegment(boxStart, boxEnd, polyStart, polyEnd, s, t, tempClose1, tempClose2);
-				if (tempDist < distance)
-				{
-					distance = tempDist;
-					closest = (tempClose1 + tempClose2) * 0.5f;
-				}
-			}
-		}
-
-		sat.collPoint = closest;
-	}
+	}	
 
 	return sat;
 }
@@ -761,7 +690,6 @@ CollisionInfo PhysicsScene::box2Stitched(PhysicsObject * obj1, PhysicsObject * o
 			{
 				++collCount;
 				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
-				result.collPoint += allCollInfo[i].collPoint;
 
 				if (allCollInfo[i].fPenetration > backup.fPenetration)
 				{
@@ -770,7 +698,6 @@ CollisionInfo PhysicsScene::box2Stitched(PhysicsObject * obj1, PhysicsObject * o
 			}
 		}
 		result.collNormal /= collCount;
-		result.collPoint /= collCount;
 
 		result.fPenetration = length(result.collNormal);
 		if (result.fPenetration > FLT_EPSILON)
@@ -869,43 +796,6 @@ CollisionInfo PhysicsScene::poly2Poly(PhysicsObject * obj1, PhysicsObject * obj2
 		}
 	}
 
-	if (sat.bCollision)
-	{
-		float distance = FLT_MAX;
-		vec2 closest;
-		for (int i = 0; i < poly1->GetVerticeCount(); ++i)
-		{
-			vec2 poly1Start = poly1->getPosition() + poly1->GetRotatedVert(i);
-			vec2 poly1End = poly1->getPosition();
-			if (i + 1 >= poly1->GetVerticeCount())
-				poly1End += poly1->GetRotatedVert(0);
-			else
-				poly1End += poly1->GetRotatedVert(i + 1);
-
-			for (int j = 0; j < poly2->GetVerticeCount(); ++j)
-			{
-				vec2 poly2Start = poly2->getPosition() + poly2->GetRotatedVert(j);
-				vec2 poly2End = poly2->getPosition();
-				if (j + 1 >= poly2->GetVerticeCount())
-					poly2End += poly2->GetRotatedVert(0);
-				else
-					poly2End += poly2->GetRotatedVert(j + 1);
-
-				vec2 tempClose1, tempClose2;
-				float s, t;
-
-				float tempDist = ClosestPtSegmentSegment(poly1Start, poly1End, poly2Start, poly2End, s, t, tempClose1, tempClose2);
-				if (tempDist < distance)
-				{
-					distance = tempDist;
-					closest = (tempClose1 + tempClose2) * 0.5f;
-				}
-			}
-		}
-
-		sat.collPoint = closest;
-	}
-
 	return sat;
 }
 
@@ -937,7 +827,6 @@ CollisionInfo PhysicsScene::poly2Stitched(PhysicsObject * obj1, PhysicsObject * 
 			{
 				++collCount;
 				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
-				result.collPoint += allCollInfo[i].collPoint;
 
 				if (allCollInfo[i].fPenetration > backup.fPenetration)
 				{
@@ -946,7 +835,6 @@ CollisionInfo PhysicsScene::poly2Stitched(PhysicsObject * obj1, PhysicsObject * 
 			}
 		}
 		result.collNormal /= collCount;
-		result.collPoint /= collCount;
 
 		result.fPenetration = length(result.collNormal);
 		if (result.fPenetration > FLT_EPSILON)
@@ -1015,7 +903,6 @@ CollisionInfo PhysicsScene::stitched2Stitched(PhysicsObject * obj1, PhysicsObjec
 			{
 				++collCount;
 				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
-				result.collPoint += allCollInfo[i].collPoint;
 
 				if (allCollInfo[i].fPenetration > backup.fPenetration)
 				{
@@ -1024,7 +911,6 @@ CollisionInfo PhysicsScene::stitched2Stitched(PhysicsObject * obj1, PhysicsObjec
 			}
 		}
 		result.collNormal /= collCount;
-		result.collPoint /= collCount;
 
 		result.fPenetration = length(result.collNormal);
 		if (result.fPenetration > FLT_EPSILON)
@@ -1038,178 +924,35 @@ CollisionInfo PhysicsScene::stitched2Stitched(PhysicsObject * obj1, PhysicsObjec
 
 void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, RigidBody * rb1, RigidBody * rb2)
 {
+	static float test;
+	static vec2 testVec;
+
 	//if (overlap <= 0.075f)
 	//	return;
 
-	bool debug = false;
-	bool rb1GoodVel = true;
-	bool rb2GoodVel = true;
-
 	float ratio = 1;
-
-	bool BROKEN = true;
-	if (BROKEN)
-	{
-		if (rb2)
-		{
-			float rb1InvMass = 1 / rb1->getMass();
-			float rb2InvMass = 1 / rb2->getMass();
-
-			float rb1Mom = length(rb1->getVelocity()) * rb1InvMass;
-			float rb2Mom = length(rb2->getVelocity()) * rb2InvMass;
-
-			ratio = rb1Mom / (rb1Mom + rb2Mom);
-			rb2->setPosition(rb2->getPosition() + (collNormal * overlap * (1 - ratio)));
-		}
-		rb1->setPosition(rb1->getPosition() - (collNormal * overlap * ratio));
-		return;
-	}
-
-
-	// check velocity is real
-	vec2 rb1Pos = rb1->getPosition();
-	vec2 rb1Vel = rb1->getVelocity();
-	vec2 rb1UnitVel = normalize(rb1Vel);
-	float rb1Speed = length(rb1Vel);
-
-	// NAN check
-	if (rb1UnitVel.x != rb1UnitVel.x || rb1UnitVel.y != rb1UnitVel.y)
-	{
-		rb1GoodVel = false;
-		rb1Vel = { 0,0 };
-		rb1UnitVel = { 0,0 };
-		rb1Speed = 0;
-	}
-	vec2 relVel = rb1UnitVel;
-
-	/// These are for debugging
-	vec2 rb1Offset = { 0,0 };
-	vec2 rb2Offset = { 0,0 };
-
-	
-	// IF rb2 exists
 	if (rb2)
 	{
-		// check velocity is real
-		vec2 rb2Pos = rb2->getPosition();
-		vec2 rb2Vel = rb2->getVelocity();
-		vec2 rb2UnitVel = normalize(rb2Vel);
-		float rb2Speed = length(rb2Vel);
+		float rb1InvMass = 1 / rb1->getMass();
+		float rb2InvMass = 1 / rb2->getMass();
 
-		// NAN check
-		if (rb2UnitVel.x != rb2UnitVel.x)
-		{
-			rb2GoodVel = false;
-			rb2Vel = { 0,0 };
-			rb2UnitVel = { 0,0 };
-			rb2Speed = 0;
-		}
-
-		relVel -= rb2UnitVel;
-
-		// Get the real ratio
-		float rb1Mom = rb1Speed * (1 / rb1->getMass());
-		float rb2Mom = rb2Speed * (1 / rb2->getMass());
+		float rb1Mom = length(rb1->getVelocity()) * rb1InvMass;
+		float rb2Mom = length(rb2->getVelocity()) * rb2InvMass;
 
 		ratio = rb1Mom / (rb1Mom + rb2Mom);
-
-		if (ratio != ratio)
-			return;
-
-		if (length(relVel) < FLT_EPSILON || abs(dot(relVel, collNormal)) < 0.1f)
-		{
-			relVel = collNormal;
-		}
-	
-		// Restitute rb2
-		rb2Offset = relVel * overlap * (1 - ratio);
-		rb2->setPosition(rb2Pos - rb2Offset);
+		rb2->setPosition(rb2->getPosition() + (collNormal * overlap * (1 - ratio)));
+		rb1->setPosition(rb1->getPosition() - (collNormal * overlap * ratio));
 	}
-
-	float test = abs(dot(relVel, collNormal));
-	if (length(relVel) < FLT_EPSILON || test < 0.1f)
+	else
 	{
-		relVel = collNormal;
+		rb1->setPosition(rb1->getPosition() + (collNormal * overlap * ratio));
 	}
 
-	// Restitute rb1
-	rb1Offset = relVel * overlap * ratio;
-	rb1->setPosition(rb1Pos - rb1Offset);
-
-	if (rb1->getPosition().x != rb1->getPosition().x)
-		printf("FUCK");
-	if (rb2)
-		if (rb2->getPosition().x != rb2->getPosition().x)
-			printf("FUCK");
-}
-
-void PhysicsScene::CalcTorque(glm::vec2 const& collPoint, RigidBody* rb1, RigidBody* rb2)
-{
-
-	vec2 rb1Pos = rb1->getPosition();
-	vec2 rb1Vel = rb1->getVelocity();
-	float rb1Radius = length(collPoint - rb1Pos);
-
-	vec2 relVel = rb1Vel;
-	float ratio = 1;
-
-	if (rb2)
+	if (rb1->getShapeID() == ShapeID::Sphere)
 	{
-		if (rb2->getShapeID() == ShapeID::Box && rb1->getShapeID() == ShapeID::Box)
-		{
-			return;
-		}
-		else if (rb1->getShapeID() == ShapeID::Box)
-		{
-			ratio = 0;
-		}
-		else 
-		{
-			float rb1InvMass = 1 / rb1->getMass();
-			float rb2InvMass = 1 / rb2->getMass();
-
-			ratio = rb1InvMass / (rb1InvMass + rb2InvMass);
-		}
-
-		if ((rb2->getShapeID() != ShapeID::Box))
-		{
-			vec2 rb2Pos = rb2->getPosition();
-			vec2 rb2Vel = rb2->getVelocity();
-			float rb2Radius = length(collPoint - rb2Pos);
-
-			relVel -= rb2Vel;
-
-			float rb2RadToForce = dot(normalize(relVel), normalize(collPoint - rb2Pos));
-			float rb2Theta = acosf(rb2RadToForce);
-
-			float rb2Torque = sinf(rb2Theta) * rb2Radius * length(relVel) * (1 - ratio);
-			float rb2Inertia = 0.4 * rb2->getMass() * (rb2Radius * rb2Radius);
-
-			float rb2AngVel = rb2->getAngularVelocity();
-			rb2AngVel += rb2Torque / rb2Inertia * m_timeStep;
-
-			if (rb2AngVel != rb2AngVel)
-				printf("ANGULAR FUCK");
-			rb2->setAngularVelocity(rb2AngVel);
-		}
+		testVec = collNormal;
+		test = overlap;
 	}
-
-	// EARLY EXIT
-	if (rb1->getShapeID() == ShapeID::Box)
-		return;
-
-	float rb1RadToForce = dot(normalize(relVel), normalize(collPoint - rb1Pos));
-	float rb1Theta = acosf(rb1RadToForce);
-
-	float rb1Torque = sinf(rb1Theta) * rb1Radius * length(relVel) * ratio;
-	float rb1Inertia = 0.4 * rb1->getMass() * (rb1Radius * rb1Radius);
-
-	float rb1AngVel = rb1->getAngularVelocity();
-	rb1AngVel += rb1Torque / rb1Inertia * m_timeStep;
-
-	if (rb1AngVel != rb1AngVel)
-		printf("ANGULAR FUCK");
-	rb1->setAngularVelocity(rb1AngVel);
 
 	return;
 }
@@ -1244,99 +987,4 @@ bool PhysicsScene::ProjectionOverlap(float const & min1, float const & max1, flo
 
 	overlap = fMax - fMin;
 	return true;
-}
-
-float PhysicsScene::DistPointPlane(glm::vec2 const & point, Plane * plane)
-{
-	return dot(plane->getNormal(), point) - plane->getDistance();
-}
-
-glm::vec2 PhysicsScene::ClosestPtPointPlane(glm::vec2 const & point, Plane * plane)
-{
-	float t = DistPointPlane(point, plane);
-	return point - t * plane->getNormal();
-}
-
-void PhysicsScene::ClosestPtPointSegment(glm::vec2 const & point, glm::vec2 const & start, glm::vec2 end, float & t, glm::vec2 & closest)
-{
-	vec2 line = end - start;
-
-	t = dot(point - start, line) / dot(line, line);
-
-	t = Clamp(t, 0, 1);
-
-	closest = start + t * line;
-}
-
-float PhysicsScene::ClosestPtSegmentSegment(glm::vec2 const & start1, glm::vec2 const & end1, glm::vec2 const & start2, glm::vec2 const & end2, 
-											float & s, float & t, glm::vec2 & closest1, glm::vec2 & closest2)
-{
-	vec2 d1 = end1 - start1;
-	vec2 d2 = end2 - start2;
-	vec2 r = start1 - start2;
-
-	float a = dot(d1, d1);
-	float e = dot(d2, d2);
-	float f = dot(d2, r);
-
-	if (a <= FLT_EPSILON && e <= FLT_EPSILON)
-	{
-		s = t = 0.0f;
-		closest1 = start1;
-		closest2 = start2;
-
-		return dot(closest1 - closest2, closest1 - closest2);
-	}
-	if (a <= FLT_EPSILON)
-	{
-		s = 0.0f;
-		t = f / e;
-		t = Clamp(t, 0, 1);
-	} 
-	else
-	{
-		float c = dot(d1, r);
-		if (e <= FLT_EPSILON)
-		{
-			t = 0.0f;
-			s = Clamp(-c / a, 0, 1);
-		}
-		else
-		{
-			float b = dot(d1, d2);
-			float denom = a * e - b * b;
-
-			if (denom != 0.0f)
-			{
-				s = Clamp((b*f - c * e) / denom, 0, 1);
-			}
-			else
-			{
-				s = 0.0f;
-			}
-			t = (b*s + f) / e;
-
-			if (t < 0.0f)
-			{
-				t = 0.0f;
-				s = Clamp(-c / a, 0, 1);
-			}
-			else if (t > 1.0f)
-			{
-				t = 1.0f;
-				s = Clamp((b - c) / a, 0, 1);
-			}
-		}
-	}
-
-	closest1 = start1 + d1 * s;
-	closest2 = start2 + d2 * t;
-	return dot(closest1 - closest2, closest1 - closest2);
-}
-
-float PhysicsScene::Clamp(float n, float min, float max)
-{
-	if (n < min) return min;
-	if (n > max) return max;
-	return n;
 }
