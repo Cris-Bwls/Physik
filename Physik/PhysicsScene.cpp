@@ -205,8 +205,11 @@ CollisionInfo PhysicsScene::plane2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 		float pen = r - abs(s);
 
 		result.bCollision = pen >= 0;
-		result.fPenetration = pen;
-		result.collNormal = collNorm;
+		if (result.bCollision)
+		{
+			result.fPenetration = pen;
+			result.collNormal = -collNorm;
+		}
 	}
 	return result;
 }
@@ -455,8 +458,9 @@ CollisionInfo PhysicsScene::sphere2Stitched(PhysicsObject * obj1, PhysicsObject 
 			result.collNormal = normalize(result.collNormal);
 		else
 			result = backup;
-	}
 
+		result = backup;
+	}
 	return result;
 }
 
@@ -704,8 +708,9 @@ CollisionInfo PhysicsScene::box2Stitched(PhysicsObject * obj1, PhysicsObject * o
 			result.collNormal = normalize(result.collNormal);
 		else
 			result = backup;
-	}
 
+		result = backup;
+	}
 	return result;
 }
 
@@ -924,8 +929,8 @@ CollisionInfo PhysicsScene::stitched2Stitched(PhysicsObject * obj1, PhysicsObjec
 
 void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, RigidBody * rb1, RigidBody * rb2)
 {
-	//if (overlap <= 0.075f)
-	//	return;
+	if (overlap <= 0.075f)
+		return;
 
 	bool debug = false;
 	bool rb1GoodVel = true;
@@ -933,7 +938,7 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 
 	float ratio = 1;
 
-	bool BROKEN = false;
+	bool BROKEN = true;
 	if (BROKEN)
 	{
 		if (rb2)
@@ -946,8 +951,10 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 
 			ratio = rb1Mom / (rb1Mom + rb2Mom);
 			rb2->setPosition(rb2->getPosition() + (collNormal * overlap * (1 - ratio)));
+			rb1->setPosition(rb1->getPosition() - (collNormal * overlap * ratio));
 		}
-		rb1->setPosition(rb1->getPosition() - (collNormal * overlap * ratio));
+		else
+			rb1->setPosition(rb1->getPosition() + (collNormal * overlap * ratio));
 		return;
 	}
 
@@ -959,7 +966,7 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 	float rb1Speed = length(rb1Vel);
 
 	// NAN check
-	if (rb1UnitVel.x != rb1UnitVel.x || rb1Speed == 0)
+	if (rb1Speed == 0)
 	{
 		rb1GoodVel = false;
 		rb1Vel = { 0,0 };
@@ -983,7 +990,7 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 		float rb2Speed = length(rb2Vel);
 
 		// NAN check
-		if (rb2UnitVel.x != rb2UnitVel.x || rb2Speed == 0)
+		if (rb2Speed == 0)
 		{
 			rb2GoodVel = false;
 			rb2Vel = { 0,0 };
@@ -1002,34 +1009,14 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 		if (ratio != ratio)
 			return;
 
-		//if (length(relVel) < FLT_EPSILON || abs(dot(relVel, collNormal)) < 0.1f)
-		//{
-		//	relVel = -collNormal;
-		//}
-
 		// Restitute rb2
 		rb2Offset = relVel * overlap * (1 - ratio);
 		rb2->setPosition(rb2Pos - rb2Offset);
-
-		if (rb2->getShapeID() == ShapeID::Stitched && rb1->getShapeID() == ShapeID::Stitched)
-			printf("WHY");
 	}
-
-	//float test = abs(dot(relVel, collNormal));
-	//if (length(relVel) < FLT_EPSILON || test < 0.1f)
-	//{
-	//	relVel = collNormal;
-	//}
 
 	// Restitute rb1
 	rb1Offset = relVel * overlap * ratio;
 	rb1->setPosition(rb1Pos - rb1Offset);
-
-	if (rb1->getPosition().x != rb1->getPosition().x)
-		printf("FUCK");
-	if (rb2)
-		if (rb2->getPosition().x != rb2->getPosition().x)
-			printf("FUCK");
 }
 
 void PhysicsScene::debugScene()

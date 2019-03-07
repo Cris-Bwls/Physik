@@ -54,10 +54,10 @@ bool PhysikApp::startup() {
 	m_pPhysicsScene->AddActor(plane3);
 	m_pPhysicsScene->AddActor(plane4);
 	
-	Plane* diag = new Plane({ 2.0f,1 }, -80.0f, FRICTION_COEFFICIENTS);
+	Plane* diag = new Plane({ -2.0f,-1 }, 80.0f, FRICTION_COEFFICIENTS);
 	m_pPhysicsScene->AddActor(diag);
 
-	Box* box1 = new Box({ 5,5 }, { 80, -50 }, { -60,0 }, 1, 1,  FRICTION_COEFFICIENTS, 0.01f, 0.01f, { 0,0,1,1 }, true);
+	Box* box1 = new Box({ 5,5 }, { 80, -50 }, { -20,0 }, 1, 1,  FRICTION_COEFFICIENTS, 0.01f, 0.01f, { 0,0,1,1 }, true);
 	Box* box2 = new Box({ 5,5 }, { 0, -35 }, { 0,0 }, 1, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, { 0,0,1,1 }, true);
 	m_pPhysicsScene->AddActor(box2);
 	m_pPhysicsScene->AddActor(box1);
