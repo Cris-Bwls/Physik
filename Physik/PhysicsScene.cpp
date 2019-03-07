@@ -112,7 +112,6 @@ void PhysicsScene::checkForCollision()
 					{
 						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object2);
 						((Plane*)object1)->resolveCollision((RigidBody*)object2, info.collNormal);
-						((RigidBody*)object2)->resolveFriction(object1, info.collNormal, m_gravity, m_timeStep);
 
 						// DEBUG
 						((RigidBody*)object2)->InvertIsFilled();
@@ -121,7 +120,6 @@ void PhysicsScene::checkForCollision()
 					{
 						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object1);
 						((Plane*)object2)->resolveCollision((RigidBody*)object2, info.collNormal);
-						((RigidBody*)object1)->resolveFriction(object2, info.collNormal, m_gravity, m_timeStep);
 
 						// DEBUG
 						((RigidBody*)object1)->InvertIsFilled();
@@ -130,7 +128,6 @@ void PhysicsScene::checkForCollision()
 					{
 						Restitution(info.fPenetration, info.collNormal, (RigidBody*)object1, (RigidBody*)object2);
 						((RigidBody*)object1)->resolveCollision((RigidBody*)object2, info.collNormal);
-						((RigidBody*)object1)->resolveFriction(object2, info.collNormal, m_gravity, m_timeStep);
 
 						// DEBUG
 						((RigidBody*)object1)->InvertIsFilled();

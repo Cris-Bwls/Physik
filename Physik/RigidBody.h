@@ -36,7 +36,6 @@ public:
 	inline void InvertIsFilled() { m_bIsFilled = !m_bIsFilled; };
 	
 	void resolveCollision(RigidBody* actor2, glm::vec2 const& normal);
-	void resolveFriction(PhysicsObject* obj2, glm::vec2 const& normal, glm::vec2 const& gravity, float const timeStep);
 protected:
 	void ApplyDrags(float const& timeStep);
 	void DebugVelocity(glm::vec2 const& startPoint);
