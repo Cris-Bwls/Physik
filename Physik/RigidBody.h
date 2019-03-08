@@ -19,6 +19,7 @@ public:
 
 	inline void setPosition(glm::vec2 const& pos) { m_position = pos; }
 	inline glm::vec2 getPosition() const { return m_position; }
+	inline void setRotation(float const& rot) { m_rotation = rot; };
 	inline float getRotation() const { return m_rotation; }
 	inline void setVelocity(glm::vec2 const& velocity) { m_velocity = velocity; };
 	inline glm::vec2 getVelocity() const { return m_velocity; }

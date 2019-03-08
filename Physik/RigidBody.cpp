@@ -25,6 +25,9 @@ RigidBody::~RigidBody()
 
 void RigidBody::fixedUpdate(vec2 const& gravity, float timeStep)
 {
+	if (m_mass == FLT_MAX)
+		return;
+
 	if (m_position.x != m_position.x)
 	{
 		printf(" FUCK");
