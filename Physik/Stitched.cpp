@@ -68,6 +68,7 @@ void Stitched::makeGizmo()
 {
 	for (int i = 0; i < m_Polys.size(); ++i)
 	{
+		m_Polys[i]->SetIsFilled(m_bIsFilled);
 		m_Polys[i]->makeGizmo();
 	}
 }
