@@ -35,7 +35,7 @@ bool PhysikApp::startup() {
 	m_font = new aie::Font("./bin/font/consolas.ttf", 32);
 	
 	m_pPhysicsScene = new PhysicsScene();
-	m_pPhysicsScene->setGravity(vec2(0, 0));
+	m_pPhysicsScene->setGravity(vec2(0, -10));
 	m_pPhysicsScene->setTimeStep(0.01f);
 
 	vec2 normalLeft = normalize(vec2(-1,0));
@@ -62,8 +62,8 @@ bool PhysikApp::startup() {
 	m_pPhysicsScene->AddActor(box2);
 	m_pPhysicsScene->AddActor(box1);
 
-	Sphere* ball1 = new Sphere(vec2(0, 40), vec2(20, 0), 0, 4.0f, 1.0f, FRICTION_COEFFICIENTS, 0.01f, 0.1f, 4, vec4(1, 0, 0, 1));
-	Sphere* ball2 = new Sphere(vec2(0, -20), vec2(0, 0), 0, 4.0f, 1.0f, FRICTION_COEFFICIENTS, 0.01f, 0.1f, 4, vec4(0, 1, 0, 1));
+	Sphere* ball1 = new Sphere(vec2(0, 40), vec2(20, 0), 0, 4.0f, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, 4, vec4(1, 0, 0, 1));
+	Sphere* ball2 = new Sphere(vec2(0, -20), vec2(0, 0), 0, 4.0f, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, 4, vec4(0, 1, 0, 1));
 	m_pPhysicsScene->AddActor(ball1);
 	m_pPhysicsScene->AddActor(ball2);
 
@@ -81,7 +81,7 @@ bool PhysikApp::startup() {
 	Stitched* stitched1 = new Stitched(stitchedVerts, { 0,0 }, { 0,0 }, 0.5f, 0, FLT_MAX, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, { 1,1,0,1 });
 	m_pPhysicsScene->AddActor(stitched1);
 	
-	Stitched* stitched2 = new Stitched(stitchedVerts, { 40,40 }, { 10,10 }, 0.0f, 0, 1, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, { 1,1,0,1 });
+	Stitched* stitched2 = new Stitched(stitchedVerts, { 40,40 }, { 10,10 }, 0.0f, 0, 1, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, { .5,0,.5,1 });
 	m_pPhysicsScene->AddActor(stitched2);
 
 	return true;

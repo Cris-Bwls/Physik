@@ -413,8 +413,6 @@ CollisionInfo PhysicsScene::sphere2Poly(PhysicsObject * obj1, PhysicsObject * ob
 	return sat;
 }
 
-static vector<CollisionInfo> test1;
-
 CollisionInfo PhysicsScene::sphere2Stitched(PhysicsObject * obj1, PhysicsObject * obj2)
 {
 	Sphere* sphere1 = (Sphere*)obj1;
@@ -458,8 +456,7 @@ CollisionInfo PhysicsScene::sphere2Stitched(PhysicsObject * obj1, PhysicsObject 
 		else
 			result = backup;
 
-		result = backup;
-		test1.push_back(result);
+		//result = backup;
 	}
 	return result;
 }
@@ -709,7 +706,7 @@ CollisionInfo PhysicsScene::box2Stitched(PhysicsObject * obj1, PhysicsObject * o
 		else
 			result = backup;
 
-		result = backup;
+		//result = backup;
 	}
 	return result;
 }
@@ -929,24 +926,67 @@ CollisionInfo PhysicsScene::stitched2Stitched(PhysicsObject * obj1, PhysicsObjec
 
 void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, RigidBody * rb1, RigidBody * rb2)
 {
-	if (overlap <= 0.075f)
+	if (overlap <= 0.01f)
 		return;
 
+	float time = 0;
+	vec2 rb1Pos = rb1->getPosition();
+	vec2 rb1Vel = rb1->getVelocity();
+	float rb1Rot = rb1->getRotation();
+
+	vec2 relVel = rb1Vel;
+
+	vec2 rb1Offset = {0,0};
 	float ratio = 1;
 	if (rb2)
 	{
+		vec2 rb2Pos = rb2->getPosition();
+		vec2 rb2Vel = rb2->getVelocity();
+		float rb2Rot = rb2->getRotation();
+
 		float rb1InvMass = 1 / rb1->getMass();
 		float rb2InvMass = 1 / rb2->getMass();
 
-		float rb1Mom = rb1InvMass * length(rb1->getVelocity());
-		float rb2Mom = rb2InvMass * length(rb2->getVelocity());
+		float rb1Mom = rb1InvMass * length(rb1Vel);
+		float rb2Mom = rb2InvMass * length(rb2Vel);
 
 		ratio = rb1Mom / (rb1Mom + rb2Mom);
-		rb2->setPosition(rb2->getPosition() + (collNormal * overlap * (1 - ratio)));
-		rb1->setPosition(rb1->getPosition() - (collNormal * overlap * ratio));
+
+		relVel -= rb2Vel;
+
+		float relSpeed = length(relVel);
+
+		vec2 rb2Offset;
+		if (relSpeed > FLT_EPSILON)
+		{
+			float time = overlap / relSpeed;
+			rb1Offset = rb1Vel * time * ratio;
+			rb2Offset = rb2Vel * time * (1 - ratio);
+		}
+		else
+		{
+			rb1Offset = collNormal * overlap * ratio;
+			rb2Offset = -collNormal * overlap * (1 - ratio);
+		}
+
+		rb2->setPosition(rb2Pos - rb2Offset);
 	}
 	else
-		rb1->setPosition(rb1->getPosition() + (collNormal * overlap * ratio));
+	{
+		float relSpeed = length(relVel);
+
+		if (relSpeed > 0)
+		{
+			float time = overlap / relSpeed;
+			rb1Offset = rb1Vel * time * ratio;
+		}
+		else
+		{
+			rb1Offset = -collNormal * overlap;
+		}
+	}
+
+	rb1->setPosition(rb1Pos - rb1Offset);
 	return;
 }
 
