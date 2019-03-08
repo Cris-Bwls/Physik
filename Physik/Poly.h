@@ -24,8 +24,8 @@ public:
 
 	inline vector<vec2> GetVerts() const { return m_Vertices; }
 	inline void SetVerts(vector<vec2> const& vertices) { m_Vertices = vertices; CreateBroadColl(); CreateSNorms(); };
-	inline int GetVerticeCount() const { return m_Vertices.size(); };
-	inline int GetSNormCount() const { return m_SNorms.size(); };
+	inline int GetVerticeCount() const { return (int)m_Vertices.size(); };
+	inline int GetSNormCount() const { return (int)m_SNorms.size(); };
 	inline bool GetSNormParallel(int index) const { return m_SNorms[index].hasParallel; }
 
 	inline Sphere* GetBroadColl() const { return m_pBroadColl; };

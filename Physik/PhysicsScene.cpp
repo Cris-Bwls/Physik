@@ -91,7 +91,7 @@ void PhysicsScene::UpdateGizmos()
 
 void PhysicsScene::checkForCollision()
 {
-	int actorCount = m_actors.size();
+	int actorCount = (int)m_actors.size();
 
 	for (int outer = 0; outer < actorCount - 1; ++outer)
 	{
@@ -248,7 +248,7 @@ CollisionInfo PhysicsScene::plane2Stitched(PhysicsObject * obj1, PhysicsObject *
 	{
 		auto poly = stitched1->GetPoly(i);
 		allCollInfo.push_back(plane2Poly(plane1, poly));
-		result.bCollision += allCollInfo[i].bCollision;
+		result.bCollision |= allCollInfo[i].bCollision;
 	}
 
 	if (result.bCollision)
@@ -413,6 +413,8 @@ CollisionInfo PhysicsScene::sphere2Poly(PhysicsObject * obj1, PhysicsObject * ob
 	return sat;
 }
 
+static vector<CollisionInfo> test1;
+
 CollisionInfo PhysicsScene::sphere2Stitched(PhysicsObject * obj1, PhysicsObject * obj2)
 {
 	Sphere* sphere1 = (Sphere*)obj1;
@@ -457,6 +459,7 @@ CollisionInfo PhysicsScene::sphere2Stitched(PhysicsObject * obj1, PhysicsObject 
 			result = backup;
 
 		result = backup;
+		test1.push_back(result);
 	}
 	return result;
 }
@@ -935,8 +938,8 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 		float rb1InvMass = 1 / rb1->getMass();
 		float rb2InvMass = 1 / rb2->getMass();
 
-		float rb1Mom = length(rb1->getVelocity()) * rb1InvMass;
-		float rb2Mom = length(rb2->getVelocity()) * rb2InvMass;
+		float rb1Mom = rb1InvMass * length(rb1->getVelocity());
+		float rb2Mom = rb2InvMass * length(rb2->getVelocity());
 
 		ratio = rb1Mom / (rb1Mom + rb2Mom);
 		rb2->setPosition(rb2->getPosition() + (collNormal * overlap * (1 - ratio)));

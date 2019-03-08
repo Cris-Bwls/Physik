@@ -16,7 +16,7 @@ public:
 	void fixedUpdate(vec2 const& gravity, float timeStep);
 	void makeGizmo();
 
-	inline int GetPolyCount() const& { return m_Polys.size(); };
+	inline int GetPolyCount() const& { return (int)m_Polys.size(); };
 	inline Poly* GetPoly(int index) const { return m_Polys[index]; };
 
 private:

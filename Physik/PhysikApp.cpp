@@ -78,10 +78,10 @@ bool PhysikApp::startup() {
 		{vec2(10, -10), vec2(0, -5), vec2(0,0), vec2(5, 0)},
 		{vec2(-10, -10), vec2(-5, 0), vec2(0,0), vec2(0, -5)}
 	};
-	Stitched* stitched1 = new Stitched(stitchedVerts, { 0,0 }, { -10,-10 }, 0.5f, 0, 1, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, { 1,1,0,1 });
+	Stitched* stitched1 = new Stitched(stitchedVerts, { 0,0 }, { 0,0 }, 0.5f, 0, FLT_MAX, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, { 1,1,0,1 });
 	m_pPhysicsScene->AddActor(stitched1);
 	
-	Stitched* stitched2 = new Stitched(stitchedVerts, { 40,40 }, { 0,0 }, 0.0f, 0, FLT_MAX, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, { 1,1,0,1 });
+	Stitched* stitched2 = new Stitched(stitchedVerts, { 40,40 }, { 10,10 }, 0.0f, 0, 1, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, { 1,1,0,1 });
 	m_pPhysicsScene->AddActor(stitched2);
 
 	return true;
