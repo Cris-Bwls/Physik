@@ -954,7 +954,8 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 
 		relVel -= rb2Vel;
 
-		float relSpeed = length(relVel);
+		//float relSpeed = length(relVel);
+		float relSpeed = abs(dot(relVel, collNormal));
 
 		vec2 rb2Offset;
 		if (relSpeed > FLT_EPSILON)
@@ -973,9 +974,10 @@ void PhysicsScene::Restitution(float overlap, glm::vec2 const& collNormal, Rigid
 	}
 	else
 	{
-		float relSpeed = length(relVel);
+		//float relSpeed = length(relVel);
+		float relSpeed = abs(dot(relVel, collNormal));
 
-		if (relSpeed > 0)
+		if (relSpeed > FLT_EPSILON)
 		{
 			float time = overlap / relSpeed;
 			rb1Offset = rb1Vel * time * ratio;
