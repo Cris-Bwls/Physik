@@ -253,7 +253,7 @@ CollisionInfo PhysicsScene::plane2Stitched(PhysicsObject * obj1, PhysicsObject *
 
 	if (result.bCollision)
 	{
-		CollisionInfo backup;
+		CollisionInfo backup = allCollInfo[0];
 		
 		int collCount = 0;
 		for (int i = 0; i < count; ++i)
@@ -261,7 +261,13 @@ CollisionInfo PhysicsScene::plane2Stitched(PhysicsObject * obj1, PhysicsObject *
 			if (allCollInfo[i].bCollision)
 			{
 				++collCount;
-				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
+
+				float fPen = allCollInfo[i].fPenetration;
+
+				if (fPen <= 0)
+					fPen = FLT_EPSILON;
+
+				result.collNormal += (allCollInfo[i].collNormal * fPen);
 				
 				if (allCollInfo[i].fPenetration > backup.fPenetration)
 				{
@@ -272,10 +278,10 @@ CollisionInfo PhysicsScene::plane2Stitched(PhysicsObject * obj1, PhysicsObject *
 		result.collNormal /= collCount;
 
 		result.fPenetration = length(result.collNormal);
-		if (result.fPenetration > FLT_EPSILON)
+		if (result.fPenetration >= 0)
 			result.collNormal = normalize(result.collNormal);
 		else
-			result = backup;
+			result = backup;		
 	}
 
 	return result;
@@ -353,9 +359,6 @@ CollisionInfo PhysicsScene::sphere2Box(PhysicsObject* obj1, PhysicsObject* obj2)
 
 			result.bCollision = true;
 			result.fPenetration = pen;
-
-			if (pen != pen)
-				printf("FUCK");
 			
 			return result;
 		}
@@ -440,7 +443,12 @@ CollisionInfo PhysicsScene::sphere2Stitched(PhysicsObject * obj1, PhysicsObject 
 			if (allCollInfo[i].bCollision)
 			{
 				++collCount;
-				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
+				float fPen = allCollInfo[i].fPenetration;
+
+				if (fPen <= 0)
+					fPen = FLT_EPSILON;
+
+				result.collNormal += (allCollInfo[i].collNormal * fPen);
 
 				if (allCollInfo[i].fPenetration > backup.fPenetration)
 				{
@@ -690,7 +698,12 @@ CollisionInfo PhysicsScene::box2Stitched(PhysicsObject * obj1, PhysicsObject * o
 			if (allCollInfo[i].bCollision)
 			{
 				++collCount;
-				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
+				float fPen = allCollInfo[i].fPenetration;
+
+				if (fPen <= 0)
+					fPen = FLT_EPSILON;
+
+				result.collNormal += (allCollInfo[i].collNormal * fPen);
 
 				if (allCollInfo[i].fPenetration > backup.fPenetration)
 				{
@@ -828,7 +841,12 @@ CollisionInfo PhysicsScene::poly2Stitched(PhysicsObject * obj1, PhysicsObject * 
 			if (allCollInfo[i].bCollision)
 			{
 				++collCount;
-				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
+				float fPen = allCollInfo[i].fPenetration;
+
+				if (fPen <= 0)
+					fPen = FLT_EPSILON;
+
+				result.collNormal += (allCollInfo[i].collNormal * fPen);
 
 				if (allCollInfo[i].fPenetration > backup.fPenetration)
 				{
@@ -904,7 +922,12 @@ CollisionInfo PhysicsScene::stitched2Stitched(PhysicsObject * obj1, PhysicsObjec
 			if (allCollInfo[i].bCollision)
 			{
 				++collCount;
-				result.collNormal += (allCollInfo[i].collNormal * allCollInfo[i].fPenetration);
+				float fPen = allCollInfo[i].fPenetration;
+
+				if (fPen <= 0)
+					fPen = FLT_EPSILON;
+
+				result.collNormal += (allCollInfo[i].collNormal * fPen);
 
 				if (allCollInfo[i].fPenetration > backup.fPenetration)
 				{

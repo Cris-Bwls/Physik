@@ -61,12 +61,12 @@ bool PhysikApp::startup() {
 	Box* box2 = new Box({ 5,5 }, { 0, -35 }, { 0,0 }, 1, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, { 0,0,1,1 }, true);
 	m_pPhysicsScene->AddActor(box2);
 	m_pPhysicsScene->AddActor(box1);
-
+	
 	Sphere* ball1 = new Sphere(vec2(0, 40), vec2(20, 0), 0, 4.0f, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, 4, vec4(1, 0, 0, 1));
 	Sphere* ball2 = new Sphere(vec2(0, -20), vec2(0, 0), 0, 4.0f, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, 4, vec4(0, 1, 0, 1));
 	m_pPhysicsScene->AddActor(ball1);
 	m_pPhysicsScene->AddActor(ball2);
-
+	
 	vector<vec2> poly1Verts = { vec2(-15, 0), vec2(-5, 10), vec2(5, 10), vec2(15, 0), vec2(5, -10), vec2(-5, -10) };
 	Poly* poly1 = new Poly(poly1Verts, { 30,-40 }, { 0,10 }, 0.0f, 0, 1, 1, FRICTION_COEFFICIENTS, 0.01f, 0.1f, vec4(1, 0, 0, 1));
 	m_pPhysicsScene->AddActor(poly1);
@@ -104,6 +104,9 @@ void PhysikApp::update(float deltaTime) {
 	aie::Gizmos::clear();
 	m_pPhysicsScene->Update(deltaTime);
 	m_pPhysicsScene->UpdateGizmos();
+
+	if (input->getMouseScroll() != 0)
+		printf("WHY");
 
 
 	// exit the application

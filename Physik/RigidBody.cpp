@@ -16,6 +16,8 @@ RigidBody::RigidBody(ShapeID shapeID, glm::vec2 position, glm::vec2 velocity, fl
 	m_drag = fDrag;
 	m_angularDrag = fAngDrag;
 
+	m_bIsFilled = true;
+
 	m_ResolutionForceSum = { 0,0 };
 }
 
@@ -27,11 +29,6 @@ void RigidBody::fixedUpdate(vec2 const& gravity, float timeStep)
 {
 	if (m_mass == FLT_MAX)
 		return;
-
-	if (m_position.x != m_position.x)
-	{
-		printf(" FUCK");
-	}
 
 	applyForce(gravity * m_mass * timeStep);
 	ApplyDrags(timeStep);
@@ -81,8 +78,6 @@ void RigidBody::resolveCollision(RigidBody* actor2, vec2 const& normal)
 				dot(normal, normal * ((1 / m_mass + (1 / actor2->getMass()))));
 
 	vec2 force = normal * j;
-	if (force.x != force.x)
-		printf("FUCK");
 
 	applyForceToActor(actor2, -force);
 }

@@ -10,9 +10,6 @@ Poly::Poly(vector<vec2> const & vertices, vec2 position, vec2 velocity, float ro
 	m_Colour = colour;
 	m_Vertices = vertices;
 
-	CreateSNorms();
-	CreateBroadColl();
-
 	Transform pos = Transform();
 	pos.SetPosition(position);
 
@@ -21,6 +18,8 @@ Poly::Poly(vector<vec2> const & vertices, vec2 position, vec2 velocity, float ro
 
 	m_GlobalTransform.LocalTransform(pos.GetTransform(), rot.GetTransform(), Transform::Identity());
 
+	CreateSNorms();
+	CreateBroadColl();
 }
 
 Poly::~Poly()

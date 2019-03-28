@@ -5,6 +5,14 @@ Stitched::Stitched(vector<vector<vec2>> const & allVertices, vec2 position, vec2
 {
 	m_Colour = colour;
 
+	Transform pos = Transform();
+	pos.SetPosition(m_position);
+
+	Transform rot = Transform();
+	rot.SetRotate2D(m_rotation);
+
+	m_GlobalTransform.LocalTransform(pos.GetTransform(), rot.GetTransform(), Transform::Identity());
+
 	for (int i = 0; i < allVertices.size(); ++i)
 	{
 		vec2 pos = vec2(0.0f, 0.0f);
@@ -24,14 +32,6 @@ Stitched::Stitched(vector<vector<vec2>> const & allVertices, vec2 position, vec2
 		Poly* poly = new Poly(verts, position + pos, { 0,0 }, rotation, 1, 1, 1, 1, 1, 1, 1, colour);
 		m_Polys.push_back(poly);
 	}
-
-	Transform pos = Transform();
-	pos.SetPosition(m_position);
-
-	Transform rot = Transform();
-	rot.SetRotate2D(m_rotation);
-
-	m_GlobalTransform.LocalTransform(pos.GetTransform(), rot.GetTransform(), Transform::Identity());
 }
 
 Stitched::~Stitched()

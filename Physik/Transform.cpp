@@ -57,18 +57,10 @@ void Transform::SetScale(glm::vec2 const & scale)
 
 glm::mat3 Transform::Identity()
 {
-	glm::mat3 identity;
+	glm::mat3 identity = glm::mat3(0);
 
 	identity[0][0] = 1.0f;
-	identity[0][1] = 0.0f;
-	identity[0][2] = 0.0f;
-
-	identity[1][0] = 0.0f;
 	identity[1][1] = 1.0f;
-	identity[1][2] = 0.0f;
-
-	identity[2][0] = 0.0f;
-	identity[2][1] = 0.0f;
 	identity[2][2] = 1.0f;
 
 	return identity;
